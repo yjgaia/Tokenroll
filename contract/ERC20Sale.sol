@@ -112,7 +112,7 @@ contract ERC20Sale {
 		require(offerInfo.amount >= amount);
 		
 		// 토큰 가격이 제시한 가격과 동일해야합니다.
-		require(amount.mul(offerInfo.amount).div(offerInfo.price) == msg.value);
+		require(amount.mul(offerInfo.amount) == msg.value.mul(offerInfo.price));
 		
 		// 토큰 구매자에게 토큰을 지급합니다.
 		erc20.transferFrom(offerInfo.offeror, msg.sender, amount);
@@ -198,8 +198,13 @@ contract ERC20Sale {
 			removeBid(bidId);
 		}
 		
+		uint256 realPrice = amount.mul(bidInfo.amount).div(bidInfo.price);
+		
+		// 가격 계산에 문제가 없어야 합니다.
+		require(amount.mul(bidInfo.amount) == realPrice.mul(bidInfo.price));
+		
 		// 판매자에게 이더를 지급합니다.
-		msg.sender.transfer(amount.mul(bidInfo.amount).div(bidInfo.price));
+		msg.sender.transfer(realPrice);
 		
 		emit Sell(bidId, amount);
 	}
