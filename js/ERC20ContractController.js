@@ -1,27 +1,23 @@
-Tokenroll.ERC20SaleContractController = OBJECT({
+Tokenroll.ERC20ContractController = CLASS({
 
-	init : (inner, self) => {
+	init : (inner, self, address) => {
 		
-		let contract;
+		let contract = web3.eth.contract(Tokenroll.ERC20ContractABI).at(address);
 		let eventMap = {};
 		
-		let setContract = self.setContract = (_contract) => {
-			contract = _contract;
+		contract.allEvents((error, info) => {
 			
-			contract.allEvents((error, info) => {
+			if (error === TO_DELETE) {
 				
-				if (error === TO_DELETE) {
-					
-					let eventHandlers = eventMap[info.event];
-		
-					if (eventHandlers !== undefined) {
-						EACH(eventHandlers, (eventHandler) => {
-							eventHandler(info.args);
-						});
-					}
+				let eventHandlers = eventMap[info.event];
+	
+				if (eventHandlers !== undefined) {
+					EACH(eventHandlers, (eventHandler) => {
+						eventHandler(info.args);
+					});
 				}
-			});
-		};
+			}
+		});
 		
 		let func = (f) => {
 			return function() {
@@ -202,58 +198,40 @@ Tokenroll.ERC20SaleContractController = OBJECT({
 			}
 		};
 		
-		// 토큰 구매 정보를 거래소에 등록합니다.
-		let bid = self.bid = func((token, amount, price, callback) => {
-			contract.bid(token, amount, {
-				value : web3.toWei(price, 'ether')
-			}, transactionCallbackWrapper(callback));
+		let name = self.name = func((callback) => {
+			contract.name(callbackWrapper(callback));
 		});
 		
-		// 토큰 구매 정보의 개수를 반환합니다.
-		let getBidCount = self.getBidCount = func((callback) => {
-			contract.getBidCount(callbackWrapper(callback));
+		let symbol = self.symbol = func((callback) => {
+			contract.symbol(callbackWrapper(callback));
 		});
 		
-		// 토큰 구매 정보를 반환합니다.
-		let getBidInfo = self.getBidInfo = func((bidId, callback) => {
-			contract.bidInfos(bidId, callbackWrapper(callback));
+		let decimals = self.decimals = func((callback) => {
+			contract.decimals(callbackWrapper(callback));
 		});
 		
-		// 토큰 구매를 취소합니다.
-		let cancelBid = self.cancelBid = func((bidId, callback) => {
-			contract.cancelBid(bidId, transactionCallbackWrapper(callback));
+		let totalSupply = self.totalSupply = func((callback) => {
+			contract.totalSupply(callbackWrapper(callback));
 		});
 		
-		// 구매 등록된 토큰을 판매합니다.
-		let sell = self.sell = func((bidId, amount, callback) => {
-			contract.sell(bidId, amount, transactionCallbackWrapper(callback));
+		let balanceOf = self.balanceOf = func((owner, callback) => {
+			contract.balanceOf(owner, callbackWrapper(callback));
 		});
 		
-		// 토큰 판매 정보를 거래소에 등록합니다.
-		let offer = self.offer = func((token, amount, price, callback) => {
-			contract.offer(token, amount, web3.toWei(price, 'ether'), transactionCallbackWrapper(callback));
+		let transfer = self.transfer = func((to, value, callback) => {
+			contract.transfer(to, value, transactionCallbackWrapper(callback));
 		});
 		
-		// 토큰 판매 정보의 개수를 반환합니다.
-		let getOfferCount = self.getOfferCount = func((callback) => {
-			contract.getOfferCount(callbackWrapper(callback));
+		let transferFrom = self.transferFrom = func((from, to, value, callback) => {
+			contract.transferFrom(from, to, value, transactionCallbackWrapper(callback));
 		});
 		
-		// 토큰 판매 정보를 반환합니다.
-		let getOfferInfo = self.getOfferInfo = func((offerId, callback) => {
-			contract.offerInfos(offerId, callbackWrapper(callback));
+		let approve = self.approve = func((spender, value, callback) => {
+			contract.approve(spender, value, transactionCallbackWrapper(callback));
 		});
 		
-		// 토큰 판매를 취소합니다.
-		let cancelOffer = self.cancelOffer = func((offerId, callback) => {
-			contract.cancelOffer(offerId, transactionCallbackWrapper(callback));
-		});
-		
-		// 판매 등록된 토큰을 구매합니다.
-		let buy = self.buy = func((offerId, amount, price, callback) => {
-			contract.buy(offerId, amount, {
-				value : web3.toWei(price, 'ether')
-			}, transactionCallbackWrapper(callback));
+		let allowance = self.allowance = func((owner, spender, callback) => {
+			contract.allowance(owner, spender, callbackWrapper(callback));
 		});
 	}
 });

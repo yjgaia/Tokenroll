@@ -3,7 +3,7 @@ RUN(() => {
 	BODY.append(Tokenroll.Header());
 	
 	BODY.append(Tokenroll.Content({
-		c : P({
+		c : [DIV({
 			style : {
 				padding : 10
 			},
@@ -16,7 +16,15 @@ RUN(() => {
 				href : 'https://github.com/Hanul/Tokenroll',
 				c : '소스코드'
 			})]
-		})
+		}), DIV({
+			style : {
+				padding : 10
+			},
+			c : [A({
+				href : 'erc20sale.html',
+				c : 'ERC20 <-> 이더'
+			})]
+		})]
 	}));
 	
 	BODY.append(Tokenroll.Footer());

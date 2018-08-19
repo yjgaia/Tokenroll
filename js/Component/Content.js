@@ -8,7 +8,8 @@ Tokenroll.Content = CLASS({
 		return {
 			style : {
 				backgroundColor : '#fff',
-				color : '#000'
+				color : '#000',
+				padding : 10
 			}
 		};
 	},

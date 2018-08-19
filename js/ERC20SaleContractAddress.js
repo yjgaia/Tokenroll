@@ -5,4 +5,4 @@ Tokenroll.ERC20SaleContractAddress = CONFIG.isDevMode !== true ?
 
 // 개발 모드
 // Kovan
-'0x52a08be93b102222a9b130fe82aab340a728688d';
+'0x7c4520e4572bef267b2d511aa155ef5d7ed7dc2a';

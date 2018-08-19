@@ -10,7 +10,7 @@ Tokenroll.WalletManager = OBJECT({
 			isEnable = true;
 			
 			// 계약 생성
-			//global.ContractController.setContract(web3.eth.contract(global.ContractABI).at(global.ContractAddress));
+			Tokenroll.ERC20SaleContractController.setContract(web3.eth.contract(Tokenroll.ERC20SaleContractABI).at(Tokenroll.ERC20SaleContractAddress));
 		}
 		
 		// 지갑을 사용할 수 있는지 확인

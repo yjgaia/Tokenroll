@@ -109,8 +109,16 @@ contract ERC20Sale {
 		// 구매하는 토큰의 양이 판매할 양보다 많아야 합니다.
 		require(bidInfo.amount >= amount);
 		
+		uint256 realPrice = amount.mul(bidInfo.price).div(bidInfo.amount);
+		
+		// 가격 계산에 문제가 없어야 합니다.
+		require(realPrice.mul(bidInfo.amount) == amount.mul(bidInfo.price));
+		
 		// 토큰 구매자에게 토큰을 지급합니다.
 		erc20.transferFrom(msg.sender, bidInfo.bidder, amount);
+		
+		// 가격을 내립니다.
+		bidInfo.price = bidInfo.price.sub(realPrice);
 		
 		// 구매할 토큰의 양을 줄입니다.
 		bidInfo.amount = bidInfo.amount.sub(amount);
@@ -119,14 +127,6 @@ contract ERC20Sale {
 		if (bidInfo.amount == 0) {
 			removeBid(bidId);
 		}
-		
-		uint256 realPrice = amount.mul(bidInfo.price).div(bidInfo.amount);
-		
-		// 가격 계산에 문제가 없어야 합니다.
-		require(realPrice.mul(bidInfo.amount) == amount.mul(bidInfo.price));
-		
-		// 가격을 내립니다.
-		bidInfo.price = bidInfo.price.sub(realPrice);
 		
 		// 판매자에게 이더를 지급합니다.
 		msg.sender.transfer(realPrice);
@@ -173,7 +173,7 @@ contract ERC20Sale {
 	// 토큰 판매를 취소합니다.
 	function cancelOffer(uint256 offerId) public {
 		
-		// 매수자인지 확인합니다.
+		// 판매자인지 확인합니다.
 		require(offerInfos[offerId].offeror == msg.sender);
 		
 		// 판매 정보 삭제
@@ -203,15 +203,15 @@ contract ERC20Sale {
 		// 토큰 구매자에게 토큰을 지급합니다.
 		erc20.transferFrom(offerInfo.offeror, msg.sender, amount);
 		
-		// 매수 토큰의 양을 줄입니다.
+		// 판매 토큰의 양을 줄입니다.
 		offerInfo.amount = offerInfo.amount.sub(amount);
 		
-		// 토큰이 모두 팔렸으면 매수 정보 삭제
+		// 토큰이 모두 팔렸으면 판매 정보 삭제
 		if (offerInfo.amount == 0) {
 			removeOffer(offerId);
 		}
 		
-		// 매수자에게 이더를 지급합니다.
+		// 판매자에게 이더를 지급합니다.
 		offerInfo.offeror.transfer(msg.value);
 		
 		emit Buy(offerId, amount);
