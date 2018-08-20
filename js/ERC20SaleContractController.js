@@ -12,6 +12,8 @@ Tokenroll.ERC20SaleContractController = OBJECT({
 				
 				if (error === TO_DELETE) {
 					
+					console.log(info.event);
+					
 					let eventHandlers = eventMap[info.event];
 		
 					if (eventHandlers !== undefined) {
@@ -229,6 +231,16 @@ Tokenroll.ERC20SaleContractController = OBJECT({
 			contract.sell(bidId, amount, transactionCallbackWrapper(callback));
 		});
 		
+		// 주어진 토큰에 해당하는 구매 정보 개수를 반환합니다.
+		let getBidCountByToken = self.getBidCountByToken = func((token, callback) => {
+			contract.getBidCountByToken(token, callbackWrapper(callback));
+		});
+		
+		// 주어진 토큰에 해당하는 구매 정보 ID 목록을 반환합니다.
+		let getBidIdsByToken = self.getBidIdsByToken = func((token, callback) => {
+			contract.getBidIdsByToken(token, callbackWrapper(callback));
+		});
+		
 		// 토큰 판매 정보를 거래소에 등록합니다.
 		let offer = self.offer = func((token, amount, price, callback) => {
 			contract.offer(token, amount, web3.toWei(price, 'ether'), transactionCallbackWrapper(callback));
@@ -254,6 +266,16 @@ Tokenroll.ERC20SaleContractController = OBJECT({
 			contract.buy(offerId, amount, {
 				value : web3.toWei(price, 'ether')
 			}, transactionCallbackWrapper(callback));
+		});
+		
+		// 주어진 토큰에 해당하는 판매 정보 개수를 반환합니다.
+		let getOfferCountByToken = self.getOfferCountByToken = func((token, callback) => {
+			contract.getOfferCountByToken(token, callbackWrapper(callback));
+		});
+		
+		// 주어진 토큰에 해당하는 판매 정보 ID 목록을 반환합니다.
+		let getOfferIdsByToken = self.getOfferIdsByToken = func((token, callback) => {
+			contract.getOfferIdsByToken(token, callbackWrapper(callback));
 		});
 	}
 });
