@@ -64,237 +64,332 @@ RUN(() => {
 	BODY.append(Tokenroll.Content({
 		c : [
 		
-		// 토큰 매도 등록 폼
-		FORM({
-			c : [
-			UUI.FULL_INPUT({
-				style : {
-					border : '1px solid #ccc'
-				},
-				name : 'token',
-				placeholder : 'ERC-20 토큰 주소',
-				on : {
-					keyup : (e, input) => {
-						showTokenInfo(bidTokenInfoPanel, input.getValue());
-					}
-				}
-			}),
-			
-			// 매도 토큰 정보
-			bidTokenInfoPanel = DIV(),
-			
-			UUI.FULL_INPUT({
-				style : {
-					marginTop : 10,
-					border : '1px solid #ccc'
-				},
-				name : 'amount',
-				placeholder : '매도 수량'
-			}),
-			UUI.FULL_INPUT({
-				style : {
-					marginTop : 10,
-					border : '1px solid #ccc'
-				},
-				name : 'price',
-				placeholder : '가격 (이더)'
-			}),
-			UUI.FULL_SUBMIT({
-				style : {
-					marginTop : 10
-				},
-				value : '등록하기'
-			})],
-			on : {
-				submit : (e, form) => {
-					
-					let info = form.getData();
-					
-					getERC20ContractController(info.token).decimals((decimals) => {
-						
-						Tokenroll.ERC20SaleContractController.bid(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
-							console.log('done');
-						});
-					});
-				}
-			}
-		}),
-		
-		// 매도 토큰 필터링
-		FORM({
-			c : [
-			UUI.FULL_INPUT({
-				style : {
-					border : '1px solid #ccc'
-				},
-				name : 'token',
-				placeholder : '필터링할 ERC-20 토큰 주소',
-				on : {
-					keyup : (e, input) => {
-						showTokenInfo(bidTokenInfoPanel2, input.getValue());
-					}
-				}
-			}),
-			
-			// 매도 토큰 정보
-			bidTokenInfoPanel2 = DIV(),
-			
-			UUI.FULL_SUBMIT({
-				style : {
-					marginTop : 10
-				},
-				value : '검색하기'
-			})],
-			on : {
-				submit : (e, form) => {
-					loadBids(form.getData().token);
-				}
-			}
-		}),
-		
-		// 매도 목록
-		bidList = DIV(),
-		
-		// 토큰 매수 등록 폼
-		FORM({
+		UUI.PANEL({
 			style : {
-				marginTop : 10
+				width : '50%',
+				flt : 'left'
 			},
-			c : [
-			UUI.FULL_INPUT({
+			contentStyle : {
+				padding : 10
+			},
+			c : DIV({
 				style : {
-					border : '1px solid #ccc'
+					border : '1px solid #ccc',
+					borderRadius : 5
 				},
-				name : 'token',
-				placeholder : 'ERC-20 토큰 주소',
-				on : {
-					keyup : (e, input) => {
-						
-						let token = input.getValue();
-						
-						showTokenInfo(offerTokenInfoPanel, token);
-						
-						offerAllowancePanel.empty();
-						
-						if (token.length !== 42) {
-							offerAllowancePanel.empty();
-						} else {
+				c : [
+				DIV({
+					style : {
+						textAlign : 'center',
+						color : 'rgb(230, 5, 10)',
+						padding : 10,
+						borderBottom : '1px solid #ccc'
+					},
+					c : [H3({
+						c : '토큰 구매하기'
+					}), P({
+						c : '토큰 구매 정보를 등록하면, 토큰 보유자가 구매 정보를 보고 판매하게 됩니다.'
+					})]
+				}),
+				
+				// 토큰 구매 정보 등록 폼
+				FORM({
+					style : {
+						padding : 10,
+						borderBottom : '1px solid #ccc'
+					},
+					c : [
+					UUI.FULL_INPUT({
+						style : {
+							border : '1px solid #ccc',
+							borderRadius : 5
+						},
+						name : 'token',
+						placeholder : 'ERC-20 토큰 주소',
+						on : {
+							keyup : (e, input) => {
+								showTokenInfo(bidTokenInfoPanel, input.getValue());
+							}
+						}
+					}),
+					
+					// 토큰 정보
+					bidTokenInfoPanel = DIV(),
+					
+					UUI.FULL_INPUT({
+						style : {
+							marginTop : 10,
+							border : '1px solid #ccc',
+							borderRadius : 5
+						},
+						name : 'amount',
+						placeholder : '구매 수량'
+					}),
+					UUI.FULL_INPUT({
+						style : {
+							marginTop : 10,
+							border : '1px solid #ccc',
+							borderRadius : 5
+						},
+						name : 'price',
+						placeholder : '가격 (이더)'
+					}),
+					UUI.FULL_SUBMIT({
+						style : {
+							marginTop : 10,
+							borderRadius : 5
+						},
+						value : '토큰 구매정보 등록하기'
+					})],
+					on : {
+						submit : (e, form) => {
 							
-							getERC20ContractController(token).decimals((decimals) => {
+							let info = form.getData();
+							
+							getERC20ContractController(info.token).decimals((decimals) => {
 								
-								getERC20ContractController(token).allowance(Tokenroll.WalletManager.getWalletAddress(), Tokenroll.ERC20SaleContractAddress, (allowance) => {
-									
-									offerAllowancePanel.empty();
-									
-									offerAllowancePanel.append(UUI.BUTTON({
-										style : {
-											backgroundColor : '#eee'
-										},
-										title : '거래소에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
-										on : {
-											tap : () => {
-												
-												UUI.PROMPT({
-													style : {
-														backgroundColor : '#fff',
-														color : '#000',
-														padding : 10,
-														border : '1px solid #ccc'
-													},
-													msg : '몇 개를 허락하시겠습니까?'
-												}, (value) => {
-													
-													getERC20ContractController(token).approve(Tokenroll.ERC20SaleContractAddress, REAL(value) * Math.pow(10, decimals), () => {
-														console.log('done');
-													});
-												});
-											}
-										}
-									}));
+								Tokenroll.ERC20SaleContractController.bid(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
+									console.log('done');
 								});
 							});
 						}
 					}
-				}
-			}),
-			
-			// 매수 토큰 정보
-			offerTokenInfoPanel = DIV(),
-			
-			// 인출 가능 정보
-			offerAllowancePanel = DIV(),
-			
-			UUI.FULL_INPUT({
-				style : {
-					marginTop : 10,
-					border : '1px solid #ccc'
-				},
-				name : 'amount',
-				placeholder : '매수 수량'
-			}),
-			UUI.FULL_INPUT({
-				style : {
-					marginTop : 10,
-					border : '1px solid #ccc'
-				},
-				name : 'price',
-				placeholder : '가격 (이더)'
-			}),
-			UUI.FULL_SUBMIT({
-				style : {
-					marginTop : 10
-				},
-				value : '등록하기'
-			})],
-			on : {
-				submit : (e, form) => {
+				}),
+				
+				// 토큰 필터링
+				FORM({
+					style : {
+						padding : 10,
+						borderBottom : '1px solid #ccc'
+					},
+					c : [
+					UUI.FULL_INPUT({
+						style : {
+							border : '1px solid #ccc',
+							borderRadius : 5
+						},
+						name : 'token',
+						placeholder : '검색할 ERC-20 토큰 주소',
+						on : {
+							keyup : (e, input) => {
+								showTokenInfo(bidTokenInfoPanel2, input.getValue());
+							}
+						}
+					}),
 					
-					let info = form.getData();
+					// 토큰 정보
+					bidTokenInfoPanel2 = DIV(),
 					
-					getERC20ContractController(info.token).decimals((decimals) => {
-						
-						Tokenroll.ERC20SaleContractController.offer(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
-							console.log('done');
-						});
-					});
-				}
-			}
-		}),
-		
-		// 매수 토큰 필터링
-		FORM({
-			c : [
-			UUI.FULL_INPUT({
-				style : {
-					border : '1px solid #ccc'
-				},
-				name : 'token',
-				placeholder : '필터링할 ERC-20 토큰 주소',
-				on : {
-					keyup : (e, input) => {
-						showTokenInfo(offerTokenInfoPanel2, input.getValue());
+					UUI.FULL_SUBMIT({
+						style : {
+							marginTop : 10,
+							borderRadius : 5
+						},
+						value : '토큰 구매정보 검색하기'
+					})],
+					on : {
+						submit : (e, form) => {
+							loadBids(form.getData().token);
+						}
 					}
-				}
-			}),
-			
-			// 매수 토큰 정보
-			offerTokenInfoPanel2 = DIV(),
-			
-			UUI.FULL_SUBMIT({
-				style : {
-					marginTop : 10
-				},
-				value : '검색하기'
-			})],
-			on : {
-				submit : (e, form) => {
-					loadOffers(form.getData().token);
-				}
-			}
+				}),
+				
+				// 구매 정보 목록
+				bidList = DIV({
+					style : {
+						padding : 10
+					}
+				})]
+			})
 		}),
 		
-		// 매수 목록
-		offerList = DIV()]
+		UUI.PANEL({
+			style : {
+				width : '50%',
+				flt : 'left'
+			},
+			contentStyle : {
+				padding : 10
+			},
+			c : DIV({
+				style : {
+					border : '1px solid #ccc',
+					borderRadius : 5
+				},
+				c : [
+				DIV({
+					style : {
+						textAlign : 'center',
+						color : 'rgb(13, 70, 200)',
+						borderBottom : '1px solid #ccc',
+						padding : 10
+					},
+					c : [H3({
+						c : '토큰 판매하기'
+					}), P({
+						c : '토큰 판매 정보를 등록하면, 토큰 구매 희망자가 판매 정보를 보고 구매하게 됩니다.'
+					})]
+				}),
+				
+				// 토큰 판매 정보 등록 폼
+				FORM({
+					style : {
+						padding : 10,
+						borderBottom : '1px solid #ccc'
+					},
+					c : [
+					UUI.FULL_INPUT({
+						style : {
+							border : '1px solid #ccc',
+							borderRadius : 5
+						},
+						name : 'token',
+						placeholder : 'ERC-20 토큰 주소',
+						on : {
+							keyup : (e, input) => {
+								
+								let token = input.getValue();
+								
+								showTokenInfo(offerTokenInfoPanel, token);
+								
+								offerAllowancePanel.empty();
+								
+								if (token.length !== 42) {
+									offerAllowancePanel.empty();
+								} else {
+									
+									getERC20ContractController(token).decimals((decimals) => {
+										
+										getERC20ContractController(token).allowance(Tokenroll.WalletManager.getWalletAddress(), Tokenroll.ERC20SaleContractAddress, (allowance) => {
+											
+											offerAllowancePanel.empty();
+											
+											offerAllowancePanel.append(UUI.BUTTON({
+												style : {
+													backgroundColor : '#eee'
+												},
+												title : '거래소에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
+												on : {
+													tap : () => {
+														
+														UUI.PROMPT({
+															style : {
+																backgroundColor : '#fff',
+																color : '#000',
+																padding : 10,
+																border : '1px solid #ccc'
+															},
+															msg : '몇 개를 허락하시겠습니까?'
+														}, (value) => {
+															
+															getERC20ContractController(token).approve(Tokenroll.ERC20SaleContractAddress, REAL(value) * Math.pow(10, decimals), () => {
+																console.log('done');
+															});
+														});
+													}
+												}
+											}));
+										});
+									});
+								}
+							}
+						}
+					}),
+					
+					// 토큰 정보
+					offerTokenInfoPanel = DIV(),
+					
+					// 인출 가능 정보
+					offerAllowancePanel = DIV(),
+					
+					UUI.FULL_INPUT({
+						style : {
+							marginTop : 10,
+							border : '1px solid #ccc',
+							borderRadius : 5
+						},
+						name : 'amount',
+						placeholder : '판매 수량'
+					}),
+					UUI.FULL_INPUT({
+						style : {
+							marginTop : 10,
+							border : '1px solid #ccc',
+							borderRadius : 5
+						},
+						name : 'price',
+						placeholder : '가격 (이더)'
+					}),
+					UUI.FULL_SUBMIT({
+						style : {
+							marginTop : 10,
+							borderRadius : 5
+						},
+						value : '토큰 판매정보 등록하기'
+					})],
+					on : {
+						submit : (e, form) => {
+							
+							let info = form.getData();
+							
+							getERC20ContractController(info.token).decimals((decimals) => {
+								
+								Tokenroll.ERC20SaleContractController.offer(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
+									console.log('done');
+								});
+							});
+						}
+					}
+				}),
+				
+				// 토큰 필터링
+				FORM({
+					style : {
+						padding : 10,
+						borderBottom : '1px solid #ccc'
+					},
+					c : [
+					UUI.FULL_INPUT({
+						style : {
+							border : '1px solid #ccc',
+							borderRadius : 5
+						},
+						name : 'token',
+						placeholder : '검색할 ERC-20 토큰 주소',
+						on : {
+							keyup : (e, input) => {
+								showTokenInfo(offerTokenInfoPanel2, input.getValue());
+							}
+						}
+					}),
+					
+					// 토큰 정보
+					offerTokenInfoPanel2 = DIV(),
+					
+					UUI.FULL_SUBMIT({
+						style : {
+							marginTop : 10,
+							borderRadius : 5
+						},
+						value : '토큰 판매정보 검색하기'
+					})],
+					on : {
+						submit : (e, form) => {
+							loadOffers(form.getData().token);
+						}
+					}
+				}),
+				
+				// 토큰 판매 정보 목록
+				offerList = DIV({
+					style : {
+						padding : 10
+					}
+				})]
+			})
+		}),
+		
+		CLEAR_BOTH()]
 	}));
 	
 	BODY.append(Tokenroll.Footer());
@@ -319,9 +414,9 @@ RUN(() => {
 					}), DIV({
 						c : 'ERC-20 토큰 주소: ' + token
 					}), DIV({
-						c : '매도 수량: ' + amount / Math.pow(10, decimals)
+						c : '구매 수량: ' + amount / Math.pow(10, decimals)
 					}), DIV({
-						c : '가격 (이더): ' + web3.fromWei(price)
+						c : '가격: ' + web3.fromWei(price) + ' 이더'
 					})]
 				}));
 				
@@ -445,9 +540,9 @@ RUN(() => {
 					}), DIV({
 						c : 'ERC-20 토큰 주소: ' + token
 					}), DIV({
-						c : '매수 수량: ' + amount / Math.pow(10, decimals)
+						c : '판매 수량: ' + amount / Math.pow(10, decimals)
 					}), DIV({
-						c : '가격 (이더): ' + web3.fromWei(price)
+						c : '가격: ' + web3.fromWei(price) + ' 이더'
 					})]
 				}));
 				

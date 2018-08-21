@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/earlyaccess/notosanskr.css");
+
 /* CSS RESET */
 body, div, ul, li, h1, h2, h3, h4, h5, h6, form, input, textarea, p, th, td {
 	margin: 0;
@@ -42,8 +44,8 @@ html, body {
 	background-color: #000;
 	color: #fff;
 	word-wrap: break-word;
-	font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;
-	font-size: 14px;
+	font-family: 'Noto Sans KR';
+	font-size: 16px;
 	/* Prevent font scaling in landscape */
 	-webkit-text-size-adjust: none;
 	-moz-text-size-adjust: none;
