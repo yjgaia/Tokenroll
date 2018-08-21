@@ -33,7 +33,7 @@ RUN(() => {
 			
 			if (tokenInfo !== undefined) {
 				targetPanel.append(DIV({
-					c : [IMG({
+					c : [tokenInfo.icon === undefined ? '' : IMG({
 						src : 'resource/' + tokenInfo.icon
 					}), tokenInfo.name, tokenInfo.site === undefined ? '' : A({
 						target : '_blank',
