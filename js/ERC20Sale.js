@@ -35,7 +35,7 @@ RUN(() => {
 				targetPanel.append(DIV({
 					c : [IMG({
 						src : 'resource/' + tokenInfo.icon
-					}), tokenInfo.name, A({
+					}), tokenInfo.name, tokenInfo.site === undefined ? '' : A({
 						target : '_blank',
 						href : tokenInfo.site
 					})]
