@@ -539,9 +539,17 @@ RUN(() => {
 						paddingTop : 10
 					},
 					c : [DIV({
-						c : '구매 희망자: ' + bidder
+						c : ['구매 희망자: ', A({
+							target : 'blank',
+							href : 'http://etherscan.io/address/' + bidder,
+							c : bidder
+						})]
 					}), DIV({
-						c : 'ERC-20 토큰 주소: ' + token
+						c : ['ERC-20 토큰 주소: ', A({
+							target : 'blank',
+							href : 'http://etherscan.io/token/' + token,
+							c : token
+						})]
 					}), tokenInfoPanel = DIV(), DIV({
 						c : '구매 수량: ' + amount / Math.pow(10, decimals)
 					}), DIV({
@@ -735,9 +743,17 @@ RUN(() => {
 						paddingTop : 10
 					},
 					c : [DIV({
-						c : '판매 희망자: ' + offeror
+						c : ['판매 희망자: ', A({
+							target : 'blank',
+							href : 'http://etherscan.io/address/' + offeror,
+							c : offeror
+						})]
 					}), DIV({
-						c : 'ERC-20 토큰 주소: ' + token
+						c : ['ERC-20 토큰 주소: ', A({
+							target : 'blank',
+							href : 'http://etherscan.io/token/' + token,
+							c : token
+						})]
 					}), tokenInfoPanel = DIV(), DIV({
 						c : '판매 수량: ' + amount / Math.pow(10, decimals)
 					}), DIV({
