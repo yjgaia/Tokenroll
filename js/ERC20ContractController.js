@@ -137,32 +137,61 @@ Tokenroll.ERC20ContractController = CLASS({
 				}
 				
 				// 정상 작동
-				else if (callback !== undefined) {
+				else {
 					
-					let retry = RAR(() => {
-						
-						web3.eth.getTransactionReceipt(result, (error, result) => {
-							
-							// 트랜잭선 오류 발생
-							if (error !== TO_DELETE) {
-								if (errorHandler !== undefined) {
-									errorHandler(error.toString());
-								} else {
-									alert(error.toString());
-								}
-							}
-							
-							// 아무런 값이 없으면 재시도
-							else if (result === TO_DELETE) {
-								retry();
-							}
-							
-							// 트랜잭션 완료
-							else {
-								callback();
-							}
-						});
+					UUI.ALERT({
+						style : {
+							backgroundColor : '#fff',
+							color : '#000',
+							padding : 10,
+							border : '1px solid #ccc'
+						},
+						buttonStyle : {
+							marginTop : 10,
+							padding : 10,
+							border : '1px solid #ccc',
+							borderRadius : 5
+						},
+						msg : [P({
+							c : '트랜잭션이 진행중입니다.'
+						}), A({
+							style : {
+								color : '#3366CC',
+								fontWeight : 'bold'
+							},
+							target : '_blank',
+							href : 'https://etherscan.io/tx/' + result,
+							c : 'EtherScan에서 보기'
+						})]
 					});
+					
+					if (callback !== undefined) {
+						
+						let retry = RAR(() => {
+							
+							web3.eth.getTransactionReceipt(result, (error, result) => {
+								
+								// 트랜잭선 오류 발생
+								if (error !== TO_DELETE) {
+									if (errorHandler !== undefined) {
+										errorHandler(error.toString());
+									} else {
+										alert(error.toString());
+									}
+								}
+								
+								// 아무런 값이 없으면 재시도
+								else if (result === TO_DELETE) {
+									retry();
+								}
+								
+								// 트랜잭션 완료
+								else {
+									callback();
+								}
+							});
+						});
+					}
 				}
 			};
 		};
