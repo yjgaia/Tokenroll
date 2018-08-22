@@ -13,7 +13,7 @@ RUN(() => {
 				style : {
 					marginTop : 10
 				},
-				c : 'MetaMask를 사용할 수 없습니다. MetaMask를 설치해주시기 바랍니다.'
+				c : 'DApp을 사용하기 위해서는 MetaMask가 필요합니다. MetaMask를 설치해주시기 바랍니다.'
 			}), DIV({
 				style : {
 					marginTop : 10
