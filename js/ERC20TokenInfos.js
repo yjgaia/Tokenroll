@@ -247,5 +247,10 @@ Tokenroll.ERC20TokenInfos = {
 		name : 'Centrality Token',
 		icon : 'tokenicon/centralitytoken.png',
 		site : 'https://www.centrality.ai/'
+	},
+	'0x031fa6be087416386ab6b85fe97a0856164821c2' : {
+		name : 'RankCoin',
+		icon : 'tokenicon/rankcoin.png',
+		site : 'https://rankcoin.net/'
 	}
 };

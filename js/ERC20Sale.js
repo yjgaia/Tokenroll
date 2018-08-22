@@ -345,7 +345,10 @@ RUN(() => {
 											
 											offerAllowancePanel.append(UUI.BUTTON({
 												style : {
-													backgroundColor : '#eee'
+													marginTop : 10,
+													backgroundColor : '#ddd',
+													padding : 10,
+													borderRadius : 5
 												},
 												title : '거래소에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
 												on : {
@@ -357,6 +360,23 @@ RUN(() => {
 																color : '#000',
 																padding : 10,
 																border : '1px solid #ccc'
+															},
+															inputStyle : {
+																marginTop : 10,
+																border : '1px solid #ccc',
+																borderRadius : 5
+															},
+															okButtonStyle : {
+																marginTop : 10,
+																padding : 10,
+																border : '1px solid #ccc',
+																borderRadius : 5
+															},
+															cancelButtonStyle : {
+																marginTop : 10,
+																padding : 10,
+																border : '1px solid #ccc',
+																borderRadius : 5
 															},
 															msg : '몇 개를 허락하시겠습니까?'
 														}, (value) => {
@@ -572,6 +592,23 @@ RUN(() => {
 										padding : 10,
 										border : '1px solid #ccc'
 									},
+									inputStyle : {
+										marginTop : 10,
+										border : '1px solid #ccc',
+										borderRadius : 5
+									},
+									okButtonStyle : {
+										marginTop : 10,
+										padding : 10,
+										border : '1px solid #ccc',
+										borderRadius : 5
+									},
+									cancelButtonStyle : {
+										marginTop : 10,
+										padding : 10,
+										border : '1px solid #ccc',
+										borderRadius : 5
+									},
 									msg : '몇 개를 판매하시겠습니까? (최대 ' + amount / Math.pow(10, decimals) + '개)'
 								}, (sellAmount) => {
 									
@@ -604,6 +641,23 @@ RUN(() => {
 												color : '#000',
 												padding : 10,
 												border : '1px solid #ccc'
+											},
+											inputStyle : {
+												marginTop : 10,
+												border : '1px solid #ccc',
+												borderRadius : 5
+											},
+											okButtonStyle : {
+												marginTop : 10,
+												padding : 10,
+												border : '1px solid #ccc',
+												borderRadius : 5
+											},
+											cancelButtonStyle : {
+												marginTop : 10,
+												padding : 10,
+												border : '1px solid #ccc',
+												borderRadius : 5
 											},
 											msg : '몇 개를 허락하시겠습니까?'
 										}, (value) => {
@@ -735,6 +789,23 @@ RUN(() => {
 										color : '#000',
 										padding : 10,
 										border : '1px solid #ccc'
+									},
+									inputStyle : {
+										marginTop : 10,
+										border : '1px solid #ccc',
+										borderRadius : 5
+									},
+									okButtonStyle : {
+										marginTop : 10,
+										padding : 10,
+										border : '1px solid #ccc',
+										borderRadius : 5
+									},
+									cancelButtonStyle : {
+										marginTop : 10,
+										padding : 10,
+										border : '1px solid #ccc',
+										borderRadius : 5
 									},
 									msg : '몇 개를 구매하시겠습니까? (최대 ' + amount / Math.pow(10, decimals) + '개)'
 								}, (buyAmount) => {
