@@ -28,7 +28,7 @@ Tokenroll.ERC20SaleContractController = OBJECT({
 		let func = (f) => {
 			return function() {
 				if (Tokenroll.WalletManager.checkIsEnable() !== true) {
-					console.error('메타마스크가 잠겨있습니다.');
+					location.href = 'metamask.html';
 				} else {
 					f.apply(undefined, arguments);
 				}

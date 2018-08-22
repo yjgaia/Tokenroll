@@ -33,18 +33,49 @@ RUN(() => {
 			
 			if (tokenInfo !== undefined) {
 				targetPanel.append(DIV({
-					c : [tokenInfo.icon === undefined ? '' : IMG({
-						src : 'resource/' + tokenInfo.icon
-					}), tokenInfo.name, tokenInfo.site === undefined ? '' : A({
-						target : '_blank',
-						href : tokenInfo.site
+					style : {
+						marginTop : 10,
+						marginBottom : 10,
+						padding : 5,
+						color : '#155724',
+						backgroundColor : '#d4edda',
+						border : '1px solid #c3e6cb',
+						fontSize : 14
+					},
+					c : [UUI.BUTTON_H({
+						icon : tokenInfo.icon === undefined ? '' : IMG({
+							src : 'resource/' + tokenInfo.icon
+						}),
+						spacing : 10,
+						title : tokenInfo.name
+					}), tokenInfo.site === undefined ? '' : DIV({
+						style : {
+							marginTop : 5
+						},
+						c : A({
+							target : '_blank',
+							href : tokenInfo.site
+						})
 					})]
 				}));
 			}
 			
 			else {
 				targetPanel.append(DIV({
-					c : ['알려지지 않은 토큰입니다. 토큰 주소를 확인해주시기 바랍니다. 알려진 토큰으로 등록하기 위해서는 ', A({
+					style : {
+						marginTop : 10,
+						marginBottom : 10,
+						padding : 5,
+						color : '#856404',
+						backgroundColor : '#fff3cd',
+						border : '1px solid #ffeeba',
+						fontSize : 14
+					},
+					c : ['알려지지 않은 토큰입니다. 알려진 토큰으로 등록하기 위해서는 ', A({
+						style : {
+							color : '#3366CC',
+							fontWeight : 'bold'
+						},
 						target : '_blank',
 						href : 'https://github.com/Hanul/Tokenroll/issues',
 						c : 'Issues'
@@ -66,8 +97,19 @@ RUN(() => {
 		
 		UUI.PANEL({
 			style : {
-				width : '50%',
-				flt : 'left'
+				onDisplayResize : (width, height) => {
+					if (width < 1024) {
+						return {
+							width : '100%',
+							flt : 'none'
+						};
+					} else {
+						return {
+							width : '50%',
+							flt : 'left'
+						};
+					}
+				}
 			},
 			contentStyle : {
 				padding : 10
@@ -144,14 +186,40 @@ RUN(() => {
 					on : {
 						submit : (e, form) => {
 							
-							let info = form.getData();
-							
-							getERC20ContractController(info.token).decimals((decimals) => {
-								
-								Tokenroll.ERC20SaleContractController.bid(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
-									console.log('done');
+							if (Tokenroll.WalletManager.checkIsLocked() === true) {
+								UUI.ALERT({
+									style : {
+										backgroundColor : '#fff',
+										color : '#000',
+										padding : 10,
+										border : '1px solid #ccc'
+									},
+									buttonStyle : {
+										marginTop : 10,
+										padding : 10,
+										border : '1px solid #ccc',
+										borderRadius : 5
+									},
+									msg : [IMG({
+										src : 'resource/metamask.png'
+									}), P({
+										c : 'MetaMask가 잠겨있습니다.\nMetaMask에 로그인해주시기 바랍니다.'
+									})]
 								});
-							});
+							}
+							
+							else {
+								
+								let info = form.getData();
+								form.setData({});
+								
+								getERC20ContractController(info.token).decimals((decimals) => {
+									
+									Tokenroll.ERC20SaleContractController.bid(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
+										console.log('done');
+									});
+								});
+							}
 						}
 					}
 				}),
@@ -205,8 +273,19 @@ RUN(() => {
 		
 		UUI.PANEL({
 			style : {
-				width : '50%',
-				flt : 'left'
+				onDisplayResize : (width, height) => {
+					if (width < 1024) {
+						return {
+							width : '100%',
+							flt : 'none'
+						};
+					} else {
+						return {
+							width : '50%',
+							flt : 'left'
+						};
+					}
+				}
 			},
 			contentStyle : {
 				padding : 10
@@ -330,14 +409,40 @@ RUN(() => {
 					on : {
 						submit : (e, form) => {
 							
-							let info = form.getData();
-							
-							getERC20ContractController(info.token).decimals((decimals) => {
-								
-								Tokenroll.ERC20SaleContractController.offer(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
-									console.log('done');
+							if (Tokenroll.WalletManager.checkIsLocked() === true) {
+								UUI.ALERT({
+									style : {
+										backgroundColor : '#fff',
+										color : '#000',
+										padding : 10,
+										border : '1px solid #ccc'
+									},
+									buttonStyle : {
+										marginTop : 10,
+										padding : 10,
+										border : '1px solid #ccc',
+										borderRadius : 5
+									},
+									msg : [IMG({
+										src : 'resource/metamask.png'
+									}), P({
+										c : 'MetaMask가 잠겨있습니다.\nMetaMask에 로그인해주시기 바랍니다.'
+									})]
 								});
-							});
+							}
+							
+							else {
+								
+								let info = form.getData();
+								form.setData({});
+								
+								getERC20ContractController(info.token).decimals((decimals) => {
+									
+									Tokenroll.ERC20SaleContractController.offer(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
+										console.log('done');
+									});
+								});
+							}
 						}
 					}
 				}),
@@ -396,8 +501,6 @@ RUN(() => {
 	
 	let loadBids = RAR((token) => {
 		
-		bidList.empty();
-		
 		let createBidPanel = (bidId, bidInfo) => {
 			
 			let bidder = bidInfo[0];
@@ -408,23 +511,34 @@ RUN(() => {
 			getERC20ContractController(token).decimals((decimals) => {
 				
 				let panel;
+				let tokenInfoPanel;
 				bidList.append(panel = DIV({
+					style : bidList.getChildren().length === 0 ? undefined : {
+						marginTop : 10,
+						borderTop : '1px solid #eee',
+						paddingTop : 10
+					},
 					c : [DIV({
 						c : '구매 희망자: ' + bidder
 					}), DIV({
 						c : 'ERC-20 토큰 주소: ' + token
-					}), DIV({
+					}), tokenInfoPanel = DIV(), DIV({
 						c : '구매 수량: ' + amount / Math.pow(10, decimals)
 					}), DIV({
 						c : '가격: ' + web3.fromWei(price) + ' 이더'
 					})]
 				}));
 				
+				showTokenInfo(tokenInfoPanel, token);
+				
 				if (bidder === Tokenroll.WalletManager.getWalletAddress()) {
 					
 					panel.append(UUI.BUTTON({
 						style : {
-							backgroundColor : '#eee'
+							marginTop : 10,
+							backgroundColor : '#ddd',
+							padding : 10,
+							borderRadius : 5
 						},
 						title : '구매 취소',
 						on : {
@@ -442,7 +556,10 @@ RUN(() => {
 					
 					panel.append(UUI.BUTTON({
 						style : {
-							backgroundColor : '#eee'
+							marginTop : 10,
+							backgroundColor : '#ddd',
+							padding : 10,
+							borderRadius : 5
 						},
 						title : '판매하기',
 						on : {
@@ -466,63 +583,85 @@ RUN(() => {
 						}
 					}));
 					
-					getERC20ContractController(token).allowance(Tokenroll.WalletManager.getWalletAddress(), Tokenroll.ERC20SaleContractAddress, (allowance) => {
-						panel.append(UUI.BUTTON({
-							style : {
-								backgroundColor : '#eee'
-							},
-							title : '거래소에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
-							on : {
-								tap : () => {
-									
-									UUI.PROMPT({
-										style : {
-											backgroundColor : '#fff',
-											color : '#000',
-											padding : 10,
-											border : '1px solid #ccc'
-										},
-										msg : '몇 개를 허락하시겠습니까?'
-									}, (value) => {
+					if (Tokenroll.WalletManager.checkIsLocked() !== true) {
+						
+						getERC20ContractController(token).allowance(Tokenroll.WalletManager.getWalletAddress(), Tokenroll.ERC20SaleContractAddress, (allowance) => {
+							
+							panel.append(UUI.BUTTON({
+								style : {
+									marginTop : 10,
+									backgroundColor : '#ddd',
+									padding : 10,
+									borderRadius : 5
+								},
+								title : '거래소에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
+								on : {
+									tap : () => {
 										
-										getERC20ContractController(token).approve(Tokenroll.ERC20SaleContractAddress, REAL(value) * Math.pow(10, decimals), () => {
-											console.log('done');
+										UUI.PROMPT({
+											style : {
+												backgroundColor : '#fff',
+												color : '#000',
+												padding : 10,
+												border : '1px solid #ccc'
+											},
+											msg : '몇 개를 허락하시겠습니까?'
+										}, (value) => {
+											
+											getERC20ContractController(token).approve(Tokenroll.ERC20SaleContractAddress, REAL(value) * Math.pow(10, decimals), () => {
+												console.log('done');
+											});
 										});
-									});
+									}
 								}
-							}
-						}));
-					});
+							}));
+						});
+					}
 				}
 			});
 		};
 		
+		bidList.empty();
+		bidList.append(IMG({
+			src : 'resource/loading.gif'
+		}));
+		
 		if (VALID.notEmpty(token) === true) {
 			
 			Tokenroll.ERC20SaleContractController.getBidIdsByToken(token, (bidIds) => {
-				EACH(bidIds, (bidId) => {
-					Tokenroll.ERC20SaleContractController.getBidInfo(bidId, (bidInfo) => {
-						createBidPanel(bidId, bidInfo);
+				bidList.empty();
+				
+				if (bidIds.length === 0) {
+					bidList.append('구매 정보가 없습니다.');
+				} else {
+					EACH(bidIds, (bidId) => {
+						Tokenroll.ERC20SaleContractController.getBidInfo(bidId, (bidInfo) => {
+							createBidPanel(bidId, bidInfo);
+						});
 					});
-				});
+				}
 			});
 		}
 		
 		else {
 			
 			Tokenroll.ERC20SaleContractController.getBidCount((bidCount) => {
-				REPEAT(bidCount, (bidId) => {
-					Tokenroll.ERC20SaleContractController.getBidInfo(bidId, (bidInfo) => {
-						createBidPanel(bidId, bidInfo);
+				bidList.empty();
+				
+				if (bidCount === 0) {
+					bidList.append('구매 정보가 없습니다.');
+				} else {
+					REPEAT(bidCount, (bidId) => {
+						Tokenroll.ERC20SaleContractController.getBidInfo(bidId, (bidInfo) => {
+							createBidPanel(bidId, bidInfo);
+						});
 					});
-				});
+				}
 			});
 		}
 	});
 	
 	let loadOffers = RAR((token) => {
-		
-		offerList.empty();
 		
 		let createOfferPanel = (offerId, offerInfo) => {
 			
@@ -534,23 +673,34 @@ RUN(() => {
 			getERC20ContractController(token).decimals((decimals) => {
 				
 				let panel;
+				let tokenInfoPanel;
 				offerList.append(panel = DIV({
+					style : offerList.getChildren().length === 0 ? undefined : {
+						marginTop : 10,
+						borderTop : '1px solid #eee',
+						paddingTop : 10
+					},
 					c : [DIV({
 						c : '판매 희망자: ' + offeror
 					}), DIV({
 						c : 'ERC-20 토큰 주소: ' + token
-					}), DIV({
+					}), tokenInfoPanel = DIV(), DIV({
 						c : '판매 수량: ' + amount / Math.pow(10, decimals)
 					}), DIV({
 						c : '가격: ' + web3.fromWei(price) + ' 이더'
 					})]
 				}));
 				
+				showTokenInfo(tokenInfoPanel, token);
+				
 				if (offeror === Tokenroll.WalletManager.getWalletAddress()) {
 					
 					panel.append(UUI.BUTTON({
 						style : {
-							backgroundColor : '#eee'
+							marginTop : 10,
+							backgroundColor : '#ddd',
+							padding : 10,
+							borderRadius : 5
 						},
 						title : '판매 취소',
 						on : {
@@ -570,7 +720,10 @@ RUN(() => {
 					
 					panel.append(UUI.BUTTON({
 						style : {
-							backgroundColor : '#eee'
+							marginTop : 10,
+							backgroundColor : '#ddd',
+							padding : 10,
+							borderRadius : 5
 						},
 						title : '구매하기',
 						on : {
@@ -597,25 +750,42 @@ RUN(() => {
 			});
 		};
 		
+		offerList.empty();
+		offerList.append(IMG({
+			src : 'resource/loading.gif'
+		}));
+		
 		if (VALID.notEmpty(token) === true) {
 			
 			Tokenroll.ERC20SaleContractController.getOfferIdsByToken(token, (offerIds) => {
-				EACH(offerIds, (offerId) => {
-					Tokenroll.ERC20SaleContractController.getOfferInfo(offerId, (offerInfo) => {
-						createOfferPanel(offerId, offerInfo);
+				offerList.empty();
+				
+				if (offerIds.length === 0) {
+					offerList.append('판매 정보가 없습니다.');
+				} else {
+					EACH(offerIds, (offerId) => {
+						Tokenroll.ERC20SaleContractController.getOfferInfo(offerId, (offerInfo) => {
+							createOfferPanel(offerId, offerInfo);
+						});
 					});
-				});
+				}
 			});
 		}
 		
 		else {
 			
 			Tokenroll.ERC20SaleContractController.getOfferCount((offerCount) => {
-				REPEAT(offerCount, (offerId) => {
-					Tokenroll.ERC20SaleContractController.getOfferInfo(offerId, (offerInfo) => {
-						createOfferPanel(offerId, offerInfo);
+				offerList.empty();
+				
+				if (offerCount === 0) {
+					offerList.append('판매 정보가 없습니다.');
+				} else {
+					REPEAT(offerCount, (offerId) => {
+						Tokenroll.ERC20SaleContractController.getOfferInfo(offerId, (offerInfo) => {
+							createOfferPanel(offerId, offerInfo);
+						});
 					});
-				});
+				}
 			});
 		}
 	});
