@@ -252,5 +252,10 @@ Tokenroll.ERC20TokenInfos = {
 		name : 'RankCoin',
 		icon : 'tokenicon/rankcoin.png',
 		site : 'https://rankcoin.net/'
+	},
+	'0xa4e8c3ec456107ea67d3075bf9e3df3a75823db0' : {
+		name : 'Loom',
+		icon : 'tokenicon/loom.png',
+		site : 'https://loomx.io/'
 	}
 };
