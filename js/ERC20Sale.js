@@ -213,6 +213,8 @@ RUN(() => {
 								let info = form.getData();
 								form.setData({});
 								
+								bidTokenInfoPanel.empty();
+								
 								getERC20ContractController(info.token).decimals((decimals) => {
 									
 									Tokenroll.ERC20SaleContractController.bid(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
@@ -455,6 +457,9 @@ RUN(() => {
 								
 								let info = form.getData();
 								form.setData({});
+								
+								offerTokenInfoPanel.empty();
+								offerAllowancePanel.empty();
 								
 								getERC20ContractController(info.token).decimals((decimals) => {
 									
