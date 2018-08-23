@@ -352,7 +352,7 @@ RUN(() => {
 													padding : 10,
 													borderRadius : 5
 												},
-												title : '거래소에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
+												title : 'Tokenroll에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
 												on : {
 													tap : () => {
 														
@@ -603,7 +603,8 @@ RUN(() => {
 										backgroundColor : '#fff',
 										color : '#000',
 										padding : 10,
-										border : '1px solid #ccc'
+										border : '1px solid #ccc',
+										width : 300
 									},
 									inputStyle : {
 										marginTop : 10,
@@ -622,7 +623,16 @@ RUN(() => {
 										border : '1px solid #ccc',
 										borderRadius : 5
 									},
-									msg : '몇 개를 판매하시겠습니까? (최대 ' + amount / Math.pow(10, decimals) + '개)'
+									msg : [P({
+										c : '몇 개를 판매하시겠습니까? (최대 ' + amount / Math.pow(10, decimals) + '개)'
+									}), P({
+										style : {
+											marginTop : 10,
+											fontSize : 14,
+											color : '#666'
+										},
+										c : '판매하기 전에, Tokenroll에 허락된 인출량을 확인해주세요. Tokenroll에 인출 허락하기 버튼으로 인출량을 지정해줄 수 있습니다.'
+									})]
 								}, (sellAmount) => {
 									
 									Tokenroll.ERC20SaleContractController.sell(bidId, sellAmount * Math.pow(10, decimals), () => {
@@ -644,7 +654,7 @@ RUN(() => {
 									padding : 10,
 									borderRadius : 5
 								},
-								title : '거래소에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
+								title : 'Tokenroll에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
 								on : {
 									tap : () => {
 										
