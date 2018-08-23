@@ -1,4 +1,4 @@
-RUN(() => {
+window.addEventListener('load', () => {
 	
 	BODY.append(Tokenroll.Header());
 	

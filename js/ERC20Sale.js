@@ -1,4 +1,4 @@
-RUN(() => {
+window.addEventListener('load', () => {
 	
 	let erc20ContractControllers = {};
 	
