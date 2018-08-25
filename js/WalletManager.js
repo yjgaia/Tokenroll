@@ -30,7 +30,7 @@ Tokenroll.WalletManager = OBJECT({
 		};
 		
 		// 지갑 주소를 가져옵니다.
-		let getWalletAddress = self.getWalletAddress = () => {
+		let getWalletAddress = self.getWalletAddress = (callback) => {
 			if (checkIsEnable() !== true) {
 				console.error('지갑을 사용할 수 없습니다.');
 			} else {
