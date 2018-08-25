@@ -186,42 +186,46 @@ window.addEventListener('load', () => {
 					on : {
 						submit : (e, form) => {
 							
-							if (Tokenroll.WalletManager.checkIsLocked() === true) {
-								UUI.ALERT({
-									style : {
-										backgroundColor : '#fff',
-										color : '#000',
-										padding : 10,
-										border : '1px solid #ccc'
-									},
-									buttonStyle : {
-										marginTop : 10,
-										padding : 10,
-										border : '1px solid #ccc',
-										borderRadius : 5
-									},
-									msg : [IMG({
-										src : 'resource/metamask.png'
-									}), P({
-										c : 'MetaMask가 잠겨있습니다.\nMetaMask에 로그인해주시기 바랍니다.'
-									})]
-								});
-							}
-							
-							else {
+							WalletManager.checkIsLocked((isLocked) => {
 								
-								let info = form.getData();
-								form.setData({});
-								
-								bidTokenInfoPanel.empty();
-								
-								getERC20ContractController(info.token).decimals((decimals) => {
+								if (isLocked === true) {
 									
-									Tokenroll.ERC20SaleContractController.bid(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
-										console.log('done');
+									UUI.ALERT({
+										style : {
+											backgroundColor : '#fff',
+											color : '#000',
+											padding : 10,
+											border : '1px solid #ccc'
+										},
+										buttonStyle : {
+											marginTop : 10,
+											padding : 10,
+											border : '1px solid #ccc',
+											borderRadius : 5
+										},
+										msg : [IMG({
+											src : 'resource/metamask.png'
+										}), P({
+											c : 'MetaMask가 잠겨있습니다.\nMetaMask에 로그인해주시기 바랍니다.'
+										})]
 									});
-								});
-							}
+								}
+								
+								else {
+									
+									let info = form.getData();
+									form.setData({});
+									
+									bidTokenInfoPanel.empty();
+									
+									getERC20ContractController(info.token).decimals((decimals) => {
+										
+										Tokenroll.ERC20SaleContractController.bid(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
+											console.log('done');
+										});
+									});
+								}
+							});
 						}
 					}
 				}),
@@ -341,55 +345,58 @@ window.addEventListener('load', () => {
 									
 									getERC20ContractController(token).decimals((decimals) => {
 										
-										getERC20ContractController(token).allowance(Tokenroll.WalletManager.getWalletAddress(), Tokenroll.ERC20SaleContractAddress, (allowance) => {
+										WalletManager.getWalletAddress((walletAddress) => {
 											
-											offerAllowancePanel.empty();
-											
-											offerAllowancePanel.append(UUI.BUTTON({
-												style : {
-													marginTop : 10,
-													backgroundColor : '#ddd',
-													padding : 10,
-													borderRadius : 5
-												},
-												title : 'Tokenroll에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
-												on : {
-													tap : () => {
-														
-														UUI.PROMPT({
-															style : {
-																backgroundColor : '#fff',
-																color : '#000',
-																padding : 10,
-																border : '1px solid #ccc'
-															},
-															inputStyle : {
-																marginTop : 10,
-																border : '1px solid #ccc',
-																borderRadius : 5
-															},
-															okButtonStyle : {
-																marginTop : 10,
-																padding : 10,
-																border : '1px solid #ccc',
-																borderRadius : 5
-															},
-															cancelButtonStyle : {
-																marginTop : 10,
-																padding : 10,
-																border : '1px solid #ccc',
-																borderRadius : 5
-															},
-															msg : '몇 개를 허락하시겠습니까?'
-														}, (value) => {
+											getERC20ContractController(token).allowance(walletAddress, Tokenroll.ERC20SaleContractAddress, (allowance) => {
+												
+												offerAllowancePanel.empty();
+												
+												offerAllowancePanel.append(UUI.BUTTON({
+													style : {
+														marginTop : 10,
+														backgroundColor : '#ddd',
+														padding : 10,
+														borderRadius : 5
+													},
+													title : 'Tokenroll에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
+													on : {
+														tap : () => {
 															
-															getERC20ContractController(token).approve(Tokenroll.ERC20SaleContractAddress, REAL(value) * Math.pow(10, decimals), () => {
-																console.log('done');
+															UUI.PROMPT({
+																style : {
+																	backgroundColor : '#fff',
+																	color : '#000',
+																	padding : 10,
+																	border : '1px solid #ccc'
+																},
+																inputStyle : {
+																	marginTop : 10,
+																	border : '1px solid #ccc',
+																	borderRadius : 5
+																},
+																okButtonStyle : {
+																	marginTop : 10,
+																	padding : 10,
+																	border : '1px solid #ccc',
+																	borderRadius : 5
+																},
+																cancelButtonStyle : {
+																	marginTop : 10,
+																	padding : 10,
+																	border : '1px solid #ccc',
+																	borderRadius : 5
+																},
+																msg : '몇 개를 허락하시겠습니까?'
+															}, (value) => {
+																
+																getERC20ContractController(token).approve(Tokenroll.ERC20SaleContractAddress, REAL(value) * Math.pow(10, decimals), () => {
+																	console.log('done');
+																});
 															});
-														});
+														}
 													}
-												}
-											}));
+												}));
+											});
 										});
 									});
 								}
@@ -431,43 +438,47 @@ window.addEventListener('load', () => {
 					on : {
 						submit : (e, form) => {
 							
-							if (Tokenroll.WalletManager.checkIsLocked() === true) {
-								UUI.ALERT({
-									style : {
-										backgroundColor : '#fff',
-										color : '#000',
-										padding : 10,
-										border : '1px solid #ccc'
-									},
-									buttonStyle : {
-										marginTop : 10,
-										padding : 10,
-										border : '1px solid #ccc',
-										borderRadius : 5
-									},
-									msg : [IMG({
-										src : 'resource/metamask.png'
-									}), P({
-										c : 'MetaMask가 잠겨있습니다.\nMetaMask에 로그인해주시기 바랍니다.'
-									})]
-								});
-							}
-							
-							else {
+							WalletManager.checkIsLocked((isLocked) => {
 								
-								let info = form.getData();
-								form.setData({});
-								
-								offerTokenInfoPanel.empty();
-								offerAllowancePanel.empty();
-								
-								getERC20ContractController(info.token).decimals((decimals) => {
+								if (isLocked === true) {
 									
-									Tokenroll.ERC20SaleContractController.offer(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
-										console.log('done');
+									UUI.ALERT({
+										style : {
+											backgroundColor : '#fff',
+											color : '#000',
+											padding : 10,
+											border : '1px solid #ccc'
+										},
+										buttonStyle : {
+											marginTop : 10,
+											padding : 10,
+											border : '1px solid #ccc',
+											borderRadius : 5
+										},
+										msg : [IMG({
+											src : 'resource/metamask.png'
+										}), P({
+											c : 'MetaMask가 잠겨있습니다.\nMetaMask에 로그인해주시기 바랍니다.'
+										})]
 									});
-								});
-							}
+								}
+								
+								else {
+									
+									let info = form.getData();
+									form.setData({});
+									
+									offerTokenInfoPanel.empty();
+									offerAllowancePanel.empty();
+									
+									getERC20ContractController(info.token).decimals((decimals) => {
+										
+										Tokenroll.ERC20SaleContractController.offer(info.token, info.amount * Math.pow(10, decimals), info.price, () => {
+											console.log('done');
+										});
+									});
+								}
+							});
 						}
 					}
 				}),
@@ -564,137 +575,146 @@ window.addEventListener('load', () => {
 				
 				showTokenInfo(tokenInfoPanel, token);
 				
-				if (bidder === Tokenroll.WalletManager.getWalletAddress()) {
+				WalletManager.getWalletAddress((walletAddress) => {
 					
-					panel.append(UUI.BUTTON({
-						style : {
-							marginTop : 10,
-							backgroundColor : '#ddd',
-							padding : 10,
-							borderRadius : 5
-						},
-						title : '구매 취소',
-						on : {
-							tap : () => {
-								
-								Tokenroll.ERC20SaleContractController.cancelBid(bidId, () => {
-									console.log('done');
-								});
-							}
-						}
-					}));
-				}
-				
-				else {
-					
-					panel.append(UUI.BUTTON({
-						style : {
-							marginTop : 10,
-							backgroundColor : '#ddd',
-							padding : 10,
-							borderRadius : 5
-						},
-						title : '판매하기',
-						on : {
-							tap : () => {
-								
-								UUI.PROMPT({
-									style : {
-										backgroundColor : '#fff',
-										color : '#000',
-										padding : 10,
-										border : '1px solid #ccc',
-										width : 300
-									},
-									inputStyle : {
-										marginTop : 10,
-										border : '1px solid #ccc',
-										borderRadius : 5
-									},
-									okButtonStyle : {
-										marginTop : 10,
-										padding : 10,
-										border : '1px solid #ccc',
-										borderRadius : 5
-									},
-									cancelButtonStyle : {
-										marginTop : 10,
-										padding : 10,
-										border : '1px solid #ccc',
-										borderRadius : 5
-									},
-									msg : [P({
-										c : '몇 개를 판매하시겠습니까? (최대 ' + amount / Math.pow(10, decimals) + '개)'
-									}), P({
-										style : {
-											marginTop : 10,
-											fontSize : 14,
-											color : '#666'
-										},
-										c : '판매하기 전에, Tokenroll에 허락된 인출량을 확인해주세요. Tokenroll에 인출 허락하기 버튼으로 인출량을 지정해줄 수 있습니다.'
-									})]
-								}, (sellAmount) => {
+					if (bidder === walletAddress) {
+						
+						panel.append(UUI.BUTTON({
+							style : {
+								marginTop : 10,
+								backgroundColor : '#ddd',
+								padding : 10,
+								borderRadius : 5
+							},
+							title : '구매 취소',
+							on : {
+								tap : () => {
 									
-									Tokenroll.ERC20SaleContractController.sell(bidId, sellAmount * Math.pow(10, decimals), () => {
+									Tokenroll.ERC20SaleContractController.cancelBid(bidId, () => {
 										console.log('done');
+									});
+								}
+							}
+						}));
+					}
+					
+					else {
+						
+						panel.append(UUI.BUTTON({
+							style : {
+								marginTop : 10,
+								backgroundColor : '#ddd',
+								padding : 10,
+								borderRadius : 5
+							},
+							title : '판매하기',
+							on : {
+								tap : () => {
+									
+									UUI.PROMPT({
+										style : {
+											backgroundColor : '#fff',
+											color : '#000',
+											padding : 10,
+											border : '1px solid #ccc',
+											width : 300
+										},
+										inputStyle : {
+											marginTop : 10,
+											border : '1px solid #ccc',
+											borderRadius : 5
+										},
+										okButtonStyle : {
+											marginTop : 10,
+											padding : 10,
+											border : '1px solid #ccc',
+											borderRadius : 5
+										},
+										cancelButtonStyle : {
+											marginTop : 10,
+											padding : 10,
+											border : '1px solid #ccc',
+											borderRadius : 5
+										},
+										msg : [P({
+											c : '몇 개를 판매하시겠습니까? (최대 ' + amount / Math.pow(10, decimals) + '개)'
+										}), P({
+											style : {
+												marginTop : 10,
+												fontSize : 14,
+												color : '#666'
+											},
+											c : '판매하기 전에, Tokenroll에 허락된 인출량을 확인해주세요. Tokenroll에 인출 허락하기 버튼으로 인출량을 지정해줄 수 있습니다.'
+										})]
+									}, (sellAmount) => {
+										
+										Tokenroll.ERC20SaleContractController.sell(bidId, sellAmount * Math.pow(10, decimals), () => {
+											console.log('done');
+										});
+									});
+								}
+							}
+						}));
+						
+						WalletManager.checkIsLocked((isLocked) => {
+							
+							if (isLocked !== true) {
+								
+								WalletManager.getWalletAddress((walletAddress) => {
+									
+									getERC20ContractController(token).allowance(walletAddress, Tokenroll.ERC20SaleContractAddress, (allowance) => {
+										
+										panel.append(UUI.BUTTON({
+											style : {
+												marginTop : 10,
+												backgroundColor : '#ddd',
+												padding : 10,
+												borderRadius : 5
+											},
+											title : 'Tokenroll에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
+											on : {
+												tap : () => {
+													
+													UUI.PROMPT({
+														style : {
+															backgroundColor : '#fff',
+															color : '#000',
+															padding : 10,
+															border : '1px solid #ccc'
+														},
+														inputStyle : {
+															marginTop : 10,
+															border : '1px solid #ccc',
+															borderRadius : 5
+														},
+														okButtonStyle : {
+															marginTop : 10,
+															padding : 10,
+															border : '1px solid #ccc',
+															borderRadius : 5
+														},
+														cancelButtonStyle : {
+															marginTop : 10,
+															padding : 10,
+															border : '1px solid #ccc',
+															borderRadius : 5
+														},
+														msg : '몇 개를 허락하시겠습니까?'
+													}, (value) => {
+														
+														getERC20ContractController(token).approve(Tokenroll.ERC20SaleContractAddress, REAL(value) * Math.pow(10, decimals), () => {
+															console.log('done');
+														});
+													});
+												}
+											}
+										}));
 									});
 								});
 							}
-						}
-					}));
-					
-					if (Tokenroll.WalletManager.checkIsLocked() !== true) {
-						
-						getERC20ContractController(token).allowance(Tokenroll.WalletManager.getWalletAddress(), Tokenroll.ERC20SaleContractAddress, (allowance) => {
-							
-							panel.append(UUI.BUTTON({
-								style : {
-									marginTop : 10,
-									backgroundColor : '#ddd',
-									padding : 10,
-									borderRadius : 5
-								},
-								title : 'Tokenroll에 인출 허락하기 (현재 허락된 개수: ' + allowance / Math.pow(10, decimals) + ')',
-								on : {
-									tap : () => {
-										
-										UUI.PROMPT({
-											style : {
-												backgroundColor : '#fff',
-												color : '#000',
-												padding : 10,
-												border : '1px solid #ccc'
-											},
-											inputStyle : {
-												marginTop : 10,
-												border : '1px solid #ccc',
-												borderRadius : 5
-											},
-											okButtonStyle : {
-												marginTop : 10,
-												padding : 10,
-												border : '1px solid #ccc',
-												borderRadius : 5
-											},
-											cancelButtonStyle : {
-												marginTop : 10,
-												padding : 10,
-												border : '1px solid #ccc',
-												borderRadius : 5
-											},
-											msg : '몇 개를 허락하시겠습니까?'
-										}, (value) => {
-											
-											getERC20ContractController(token).approve(Tokenroll.ERC20SaleContractAddress, REAL(value) * Math.pow(10, decimals), () => {
-												console.log('done');
-											});
-										});
-									}
-								}
-							}));
 						});
 					}
-				}
+				});
 			});
 		};
 		
@@ -778,77 +798,80 @@ window.addEventListener('load', () => {
 				
 				showTokenInfo(tokenInfoPanel, token);
 				
-				if (offeror === Tokenroll.WalletManager.getWalletAddress()) {
+				WalletManager.getWalletAddress((walletAddress) => {
 					
-					panel.append(UUI.BUTTON({
-						style : {
-							marginTop : 10,
-							backgroundColor : '#ddd',
-							padding : 10,
-							borderRadius : 5
-						},
-						title : '판매 취소',
-						on : {
-							tap : () => {
-								
-								Tokenroll.ERC20SaleContractController.cancelOffer(offerId, () => {
-									console.log('done');
-								});
-							}
-						}
-					}));
-				}
-				
-				else {
-					
-					console.log(price);
-					
-					panel.append(UUI.BUTTON({
-						style : {
-							marginTop : 10,
-							backgroundColor : '#ddd',
-							padding : 10,
-							borderRadius : 5
-						},
-						title : '구매하기',
-						on : {
-							tap : () => {
-								
-								UUI.PROMPT({
-									style : {
-										backgroundColor : '#fff',
-										color : '#000',
-										padding : 10,
-										border : '1px solid #ccc'
-									},
-									inputStyle : {
-										marginTop : 10,
-										border : '1px solid #ccc',
-										borderRadius : 5
-									},
-									okButtonStyle : {
-										marginTop : 10,
-										padding : 10,
-										border : '1px solid #ccc',
-										borderRadius : 5
-									},
-									cancelButtonStyle : {
-										marginTop : 10,
-										padding : 10,
-										border : '1px solid #ccc',
-										borderRadius : 5
-									},
-									msg : '몇 개를 구매하시겠습니까? (최대 ' + amount / Math.pow(10, decimals) + '개)'
-								}, (buyAmount) => {
+					if (offeror === walletAddress) {
+						
+						panel.append(UUI.BUTTON({
+							style : {
+								marginTop : 10,
+								backgroundColor : '#ddd',
+								padding : 10,
+								borderRadius : 5
+							},
+							title : '판매 취소',
+							on : {
+								tap : () => {
 									
-									Tokenroll.ERC20SaleContractController.buy(offerId, buyAmount * Math.pow(10, decimals), web3.fromWei(price / amount * buyAmount * Math.pow(10, decimals)), () => {
+									Tokenroll.ERC20SaleContractController.cancelOffer(offerId, () => {
 										console.log('done');
 									});
-								});
+								}
 							}
-						}
-					}));
-				}
+						}));
+					}
+					
+					else {
+						
+						console.log(price);
+						
+						panel.append(UUI.BUTTON({
+							style : {
+								marginTop : 10,
+								backgroundColor : '#ddd',
+								padding : 10,
+								borderRadius : 5
+							},
+							title : '구매하기',
+							on : {
+								tap : () => {
+									
+									UUI.PROMPT({
+										style : {
+											backgroundColor : '#fff',
+											color : '#000',
+											padding : 10,
+											border : '1px solid #ccc'
+										},
+										inputStyle : {
+											marginTop : 10,
+											border : '1px solid #ccc',
+											borderRadius : 5
+										},
+										okButtonStyle : {
+											marginTop : 10,
+											padding : 10,
+											border : '1px solid #ccc',
+											borderRadius : 5
+										},
+										cancelButtonStyle : {
+											marginTop : 10,
+											padding : 10,
+											border : '1px solid #ccc',
+											borderRadius : 5
+										},
+										msg : '몇 개를 구매하시겠습니까? (최대 ' + amount / Math.pow(10, decimals) + '개)'
+									}, (buyAmount) => {
+										
+										Tokenroll.ERC20SaleContractController.buy(offerId, buyAmount * Math.pow(10, decimals), web3.fromWei(price / amount * buyAmount * Math.pow(10, decimals)), () => {
+											console.log('done');
+										});
+									});
+								}
+							}
+						}));
+					}
+				});
 			});
 		};
 		

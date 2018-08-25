@@ -19,14 +19,24 @@ Tokenroll.WalletManager = OBJECT({
 		};
 		
 		// 지갑이 잠금 상태인지 확인
-		let checkIsLocked = self.checkIsLocked = () => {
-			return checkIsEnable() === true && web3.eth.accounts.length === 0;
+		let checkIsLocked = self.checkIsLocked = (callback) => {
+			if (checkIsEnable() !== true) {
+				console.error('지갑을 사용할 수 없습니다.');
+			} else {
+				web3.eth.getAccounts((error, accounts) => {
+					callback(accounts.length === 0);
+				});
+			}
 		};
 		
 		// 지갑 주소를 가져옵니다.
 		let getWalletAddress = self.getWalletAddress = () => {
-			if (checkIsEnable() === true && checkIsLocked() !== true) {
-				return web3.eth.accounts[0];
+			if (checkIsEnable() !== true) {
+				console.error('지갑을 사용할 수 없습니다.');
+			} else {
+				web3.eth.getAccounts((error, accounts) => {
+					callback(accounts[0]);
+				});
 			}
 		};
 	}
