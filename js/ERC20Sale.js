@@ -186,7 +186,7 @@ window.addEventListener('load', () => {
 					on : {
 						submit : (e, form) => {
 							
-							WalletManager.checkIsLocked((isLocked) => {
+							Tokenroll.WalletManager.checkIsLocked((isLocked) => {
 								
 								if (isLocked === true) {
 									
@@ -345,7 +345,7 @@ window.addEventListener('load', () => {
 									
 									getERC20ContractController(token).decimals((decimals) => {
 										
-										WalletManager.getWalletAddress((walletAddress) => {
+										Tokenroll.WalletManager.getWalletAddress((walletAddress) => {
 											
 											getERC20ContractController(token).allowance(walletAddress, Tokenroll.ERC20SaleContractAddress, (allowance) => {
 												
@@ -438,7 +438,7 @@ window.addEventListener('load', () => {
 					on : {
 						submit : (e, form) => {
 							
-							WalletManager.checkIsLocked((isLocked) => {
+							Tokenroll.WalletManager.checkIsLocked((isLocked) => {
 								
 								if (isLocked === true) {
 									
@@ -575,7 +575,7 @@ window.addEventListener('load', () => {
 				
 				showTokenInfo(tokenInfoPanel, token);
 				
-				WalletManager.getWalletAddress((walletAddress) => {
+				Tokenroll.WalletManager.getWalletAddress((walletAddress) => {
 					
 					if (bidder === walletAddress) {
 						
@@ -656,11 +656,11 @@ window.addEventListener('load', () => {
 							}
 						}));
 						
-						WalletManager.checkIsLocked((isLocked) => {
+						Tokenroll.WalletManager.checkIsLocked((isLocked) => {
 							
 							if (isLocked !== true) {
 								
-								WalletManager.getWalletAddress((walletAddress) => {
+								Tokenroll.WalletManager.getWalletAddress((walletAddress) => {
 									
 									getERC20ContractController(token).allowance(walletAddress, Tokenroll.ERC20SaleContractAddress, (allowance) => {
 										
@@ -798,7 +798,7 @@ window.addEventListener('load', () => {
 				
 				showTokenInfo(tokenInfoPanel, token);
 				
-				WalletManager.getWalletAddress((walletAddress) => {
+				Tokenroll.WalletManager.getWalletAddress((walletAddress) => {
 					
 					if (offeror === walletAddress) {
 						
