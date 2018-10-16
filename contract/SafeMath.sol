@@ -3,7 +3,7 @@ pragma solidity ^0.4.24;
 // 숫자 계산 시 오버플로우 문제를 방지하기 위한 라이브러리
 library SafeMath {
 	
-	function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+	function add(uint256 a, uint256 b) pure internal returns (uint256 c) {
 		c = a + b;
 		assert(c >= a);
 		return c;
