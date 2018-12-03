@@ -5,54 +5,54 @@ import "./SafeMath.sol";
 
 // ERC20 토큰을 이더로 거래합니다.
 contract ERC20Sale {
-	using SafeMath for uint256;
+	using SafeMath for uint;
 	
 	// 이벤트들
-	event Bid(uint256 bidId);
-	event ChangeBidId(uint256 indexed originBidId, uint256 newBidId);
-	event RemoveBid(uint256 indexed bidId);
-	event CancelBid(uint256 indexed bidId);
-	event Sell(uint256 indexed bidId, uint256 amount);
+	event Bid(uint bidId);
+	event ChangeBidId(uint indexed originBidId, uint newBidId);
+	event RemoveBid(uint indexed bidId);
+	event CancelBid(uint indexed bidId);
+	event Sell(uint indexed bidId, uint amount);
 	
-	event Offer(uint256 offerId);
-	event ChangeOfferId(uint256 indexed originOfferId, uint256 newOfferId);
-	event RemoveOffer(uint256 indexed offerId);
-	event CancelOffer(uint256 indexed offerId);
-	event Buy(uint256 indexed offerId, uint256 amount);
+	event Offer(uint offerId);
+	event ChangeOfferId(uint indexed originOfferId, uint newOfferId);
+	event RemoveOffer(uint indexed offerId);
+	event CancelOffer(uint indexed offerId);
+	event Buy(uint indexed offerId, uint amount);
 	
 	// 구매 정보
 	struct BidInfo {
 		address bidder;
 		address token;
-		uint256 amount;
-		uint256 price;
+		uint amount;
+		uint price;
 	}
 	
 	// 판매 정보
 	struct OfferInfo {
 		address offeror;
 		address token;
-		uint256 amount;
-		uint256 price;
+		uint amount;
+		uint price;
 	}
 	
 	// 정보 저장소
 	BidInfo[] public bidInfos;
 	OfferInfo[] public offerInfos;
 	
-	function getBidCount() view public returns (uint256) {
+	function getBidCount() view public returns (uint) {
 		return bidInfos.length;
 	}
 	
-	function getOfferCount() view public returns (uint256) {
+	function getOfferCount() view public returns (uint) {
 		return offerInfos.length;
 	}
 	
 	// 토큰 구매 정보를 거래소에 등록합니다.
-	function bid(address token, uint256 amount) payable public {
+	function bid(address token, uint amount) payable public {
 		
 		// 구매 정보 생성
-		uint256 bidId = bidInfos.push(BidInfo({
+		uint bidId = bidInfos.push(BidInfo({
 			bidder : msg.sender,
 			token : token,
 			amount : amount,
@@ -63,9 +63,9 @@ contract ERC20Sale {
 	}
 	
 	// 토큰 구매 정보를 삭제합니다.
-	function removeBid(uint256 bidId) internal {
+	function removeBid(uint bidId) internal {
 		
-		for (uint256 i = bidId; i < bidInfos.length - 1; i += 1) {
+		for (uint i = bidId; i < bidInfos.length - 1; i += 1) {
 			bidInfos[i] = bidInfos[i + 1];
 			
 			emit ChangeBidId(i + 1, i);
@@ -78,7 +78,7 @@ contract ERC20Sale {
 	}
 	
 	// 토큰 구매를 취소합니다.
-	function cancelBid(uint256 bidId) public {
+	function cancelBid(uint bidId) public {
 		
 		BidInfo memory bidInfo = bidInfos[bidId];
 		
@@ -95,7 +95,7 @@ contract ERC20Sale {
 	}
 	
 	// 구매 등록된 토큰을 판매합니다.
-	function sell(uint256 bidId, uint256 amount) public {
+	function sell(uint bidId, uint amount) public {
 		
 		BidInfo storage bidInfo = bidInfos[bidId];
 		ERC20 erc20 = ERC20(bidInfo.token);
@@ -109,7 +109,7 @@ contract ERC20Sale {
 		// 구매하는 토큰의 양이 판매할 양보다 많아야 합니다.
 		require(bidInfo.amount >= amount);
 		
-		uint256 realPrice = amount.mul(bidInfo.price).div(bidInfo.amount);
+		uint realPrice = amount.mul(bidInfo.price).div(bidInfo.amount);
 		
 		// 가격 계산에 문제가 없어야 합니다.
 		require(realPrice.mul(bidInfo.amount) == amount.mul(bidInfo.price));
@@ -135,11 +135,11 @@ contract ERC20Sale {
 	}
 	
 	// 주어진 토큰에 해당하는 구매 정보 개수를 반환합니다.
-	function getBidCountByToken(address token) view public returns (uint256) {
+	function getBidCountByToken(address token) view public returns (uint) {
 		
-		uint256 bidCount = 0;
+		uint bidCount = 0;
 		
-		for (uint256 i = 0; i < bidInfos.length; i += 1) {
+		for (uint i = 0; i < bidInfos.length; i += 1) {
 			if (bidInfos[i].token == token) {
 				bidCount += 1;
 			}
@@ -149,11 +149,11 @@ contract ERC20Sale {
 	}
 	
 	// 주어진 토큰에 해당하는 구매 정보 ID 목록을 반환합니다.
-	function getBidIdsByToken(address token) view public returns (uint256[]) {
+	function getBidIdsByToken(address token) view public returns (uint[]) {
 		
-		uint256[] memory bidIds = new uint256[](getBidCountByToken(token));
+		uint[] memory bidIds = new uint[](getBidCountByToken(token));
 		
-		for (uint256 i = 0; i < bidInfos.length; i += 1) {
+		for (uint i = 0; i < bidInfos.length; i += 1) {
 			if (bidInfos[i].token == token) {
 				bidIds[bidIds.length - 1] = i;
 			}
@@ -163,7 +163,7 @@ contract ERC20Sale {
 	}
 
 	// 토큰 판매 정보를 거래소에 등록합니다.
-	function offer(address token, uint256 amount, uint256 price) public {
+	function offer(address token, uint amount, uint price) public {
 		ERC20 erc20 = ERC20(token);
 		
 		// 판매자가 가진 토큰의 양이 판매할 양보다 많아야 합니다.
@@ -173,7 +173,7 @@ contract ERC20Sale {
 		require(erc20.allowance(msg.sender, this) >= amount);
 		
 		// 판매 정보 생성
-		uint256 offerId = offerInfos.push(OfferInfo({
+		uint offerId = offerInfos.push(OfferInfo({
 			offeror : msg.sender,
 			token : token,
 			amount : amount,
@@ -184,9 +184,9 @@ contract ERC20Sale {
 	}
 	
 	// 토큰 판매 정보를 삭제합니다.
-	function removeOffer(uint256 offerId) internal {
+	function removeOffer(uint offerId) internal {
 		
-		for (uint256 i = offerId; i < offerInfos.length - 1; i += 1) {
+		for (uint i = offerId; i < offerInfos.length - 1; i += 1) {
 			offerInfos[i] = offerInfos[i + 1];
 			
 			emit ChangeOfferId(i + 1, i);
@@ -199,7 +199,7 @@ contract ERC20Sale {
 	}
 	
 	// 토큰 판매를 취소합니다.
-	function cancelOffer(uint256 offerId) public {
+	function cancelOffer(uint offerId) public {
 		
 		// 판매자인지 확인합니다.
 		require(offerInfos[offerId].offeror == msg.sender);
@@ -211,7 +211,7 @@ contract ERC20Sale {
 	}
 	
 	// 판매 등록된 토큰을 구매합니다.
-	function buy(uint256 offerId, uint256 amount) payable public {
+	function buy(uint offerId, uint amount) payable public {
 		
 		OfferInfo storage offerInfo = offerInfos[offerId];
 		ERC20 erc20 = ERC20(offerInfo.token);
@@ -249,11 +249,11 @@ contract ERC20Sale {
 	}
 	
 	// 주어진 토큰에 해당하는 판매 정보 개수를 반환합니다.
-	function getOfferCountByToken(address token) view public returns (uint256) {
+	function getOfferCountByToken(address token) view public returns (uint) {
 		
-		uint256 offerCount = 0;
+		uint offerCount = 0;
 		
-		for (uint256 i = 0; i < offerInfos.length; i += 1) {
+		for (uint i = 0; i < offerInfos.length; i += 1) {
 			if (offerInfos[i].token == token) {
 				offerCount += 1;
 			}
@@ -263,11 +263,11 @@ contract ERC20Sale {
 	}
 	
 	// 주어진 토큰에 해당하는 판매 정보 ID 목록을 반환합니다.
-	function getOfferIdsByToken(address token) view public returns (uint256[]) {
+	function getOfferIdsByToken(address token) view public returns (uint[]) {
 		
-		uint256[] memory offerIds = new uint256[](getOfferCountByToken(token));
+		uint[] memory offerIds = new uint[](getOfferCountByToken(token));
 		
-		for (uint256 i = 0; i < offerInfos.length; i += 1) {
+		for (uint i = 0; i < offerInfos.length; i += 1) {
 			if (offerInfos[i].token == token) {
 				offerIds[offerIds.length - 1] = i;
 			}
