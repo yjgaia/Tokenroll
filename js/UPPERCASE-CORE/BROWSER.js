@@ -3702,26 +3702,38 @@ global.OBJECT = METHOD((m) => {
  */
 global.NEXT = METHOD({
 
-	run : (countOrArray, funcOrFuncs) => {
-		//OPTIONAL: countOrArray
+	run : (dataOrArrayOrCount, funcOrFuncs) => {
+		//OPTIONAL: dataOrArrayOrCount
 		//REQUIRED: funcOrFuncs
 
-		let count;
+		let data;
+		let dataKeys;
 		let array;
+		let count;
 		
 		let f;
 		
 		if (funcOrFuncs === undefined) {
-			funcOrFuncs = countOrArray;
-			countOrArray = undefined;
+			funcOrFuncs = dataOrArrayOrCount;
+			dataOrArrayOrCount = undefined;
 		}
 
-		if (countOrArray !== undefined) {
-			if (CHECK_IS_ARRAY(countOrArray) !== true) {
-				count = countOrArray;
+		if (dataOrArrayOrCount !== undefined) {
+			if (CHECK_IS_DATA(dataOrArrayOrCount) === true) {
+				data = dataOrArrayOrCount;
+			} else if (CHECK_IS_ARRAY(dataOrArrayOrCount) === true) {
+				array = dataOrArrayOrCount;
 			} else {
-				array = countOrArray;
+				count = dataOrArrayOrCount;
 			}
+		}
+		
+		if (data !== undefined) {
+			dataKeys = [];
+			
+			EACH(data, (value, key) => {
+				dataKeys.push(key);
+			});
 		}
 		
 		let funcs;
@@ -3811,6 +3823,44 @@ global.NEXT = METHOD({
 
 							} else {
 								f(array[i], next, i);
+							}
+						});
+					}
+				}
+				
+				else if (data !== undefined) {
+
+					let length = dataKeys.length;
+
+					if (length === 0) {
+						next();
+					}
+					
+					else {
+						
+						let i = -1;
+
+						RUN((self) => {
+
+							i += 1;
+
+							if (i + 1 < length) {
+
+								// if shrink
+								if (dataKeys.length === length - 1) {
+									i -= 1;
+									length -= 1;
+								}
+								
+								let key = dataKeys[i];
+
+								f(data[key], self, key);
+
+							} else {
+								
+								let key = dataKeys[i];
+								
+								f(data[key], next, key);
 							}
 						});
 					}
@@ -4246,7 +4296,13 @@ global.VALID = CLASS((cls) => {
 		//OPTIONAL: params.min
 		//REQUIRED: params.max
 		
-		let str = String(params.value);
+		let value = params.value;
+		
+		if (CHECK_IS_DATA(value) === true) {
+			return false;
+		}
+		
+		let str = String(value);
 		let min = params.min;
 		let max = params.max;
 		
@@ -4788,6 +4844,10 @@ global.CHECK_ARE_SAME = METHOD({
 		let areSame = false;
 
 		let checkTwoSame = (a, b) => {
+			
+			if (a === b) {
+				return true;
+			}
 
 			// when a, b are date
 			if ( a instanceof Date === true && b instanceof Date === true) {
@@ -4813,10 +4873,7 @@ global.CHECK_ARE_SAME = METHOD({
 				});
 			}
 
-			// when a, b are value
-			else {
-				return a === b;
-			}
+			return false;
 		};
 
 		if (array.length > 1) {
@@ -5629,8 +5686,8 @@ global.INTERVAL = CLASS({
 global.LOOP = CLASS((cls) => {
 	
 	let animationInterval;
-	let loopInfos = [];
-	let runs = [];
+	
+	let infos = [];
 
 	let fire = () => {
 
@@ -5645,48 +5702,31 @@ global.LOOP = CLASS((cls) => {
 				
 				if (deltaTime > 0) {
 
-					for (let i = 0; i < loopInfos.length; i += 1) {
+					for (let i = 0; i < infos.length; i += 1) {
 
-						let loopInfo = loopInfos[i];
+						let info = infos[i];
 
-						if (loopInfo.fps !== undefined && loopInfo.fps > 0) {
+						if (info.fps !== undefined && info.fps > 0) {
 
-							if (loopInfo.timeSigma === undefined) {
-								loopInfo.timeSigma = 0;
-								loopInfo.countSigma = 0;
+							if (info.timeSigma === undefined) {
+								info.timeSigma = 0;
 							}
-
-							// calculate count.
-							let count = parseInt(loopInfo.fps * deltaTime * (loopInfo.timeSigma / deltaTime + 1), 10) - loopInfo.countSigma;
-
-							// start.
-							if (loopInfo.start !== undefined) {
-								loopInfo.start();
-							}
-
-							// run interval.
-							let interval = loopInfo.interval;
-							for (j = 0; j < count; j += 1) {
-								interval(loopInfo.fps);
-							}
-
-							// end.
-							if (loopInfo.end !== undefined) {
-								loopInfo.end(deltaTime);
-							}
-
-							loopInfo.countSigma += count;
-
-							loopInfo.timeSigma += deltaTime;
-							if (loopInfo.timeSigma > 1000) {
-								loopInfo.timeSigma = undefined;
+							
+							info.timeSigma += deltaTime;
+							
+							let frameSecond = 1 / info.fps;
+							
+							if (info.timeSigma >= frameSecond) {
+								
+								info.run(frameSecond);
+								
+								info.timeSigma -= frameSecond;
 							}
 						}
-					}
-
-					// run runs.
-					for (let i = 0; i < runs.length; i += 1) {
-						runs[i](deltaTime);
+						
+						else {
+							info.run(deltaTime);
+						}
 					}
 
 					beforeTime = time;
@@ -5697,7 +5737,7 @@ global.LOOP = CLASS((cls) => {
 	
 	let stop = () => {
 
-		if (loopInfos.length <= 0 && runs.length <= 0) {
+		if (infos.length <= 0) {
 
 			animationInterval.remove();
 			animationInterval = undefined;
@@ -5705,89 +5745,55 @@ global.LOOP = CLASS((cls) => {
 	};
 
 	return {
-
-		init : (inner, self, fpsOrRun, intervalOrFuncs) => {
-			//OPTIONAL: fpsOrRun
-			//OPTIONAL: intervalOrFuncs
-			//OPTIONAL: intervalOrFuncs.start
-			//REQUIRED: intervalOrFuncs.interval
-			//OPTIONAL: intervalOrFuncs.end
-
-			let run;
-			let start;
-			let interval;
-			let end;
-
-			let info;
-
-			if (intervalOrFuncs !== undefined) {
-
-				// init intervalOrFuncs.
-				if (CHECK_IS_DATA(intervalOrFuncs) !== true) {
-					interval = intervalOrFuncs;
-				} else {
-					start = intervalOrFuncs.start;
-					interval = intervalOrFuncs.interval;
-					end = intervalOrFuncs.end;
-				}
+		
+		init : (inner, self, fps, run) => {
+			//OPTIONAL: fps
+			//REQUIRED: run
 			
-				let resume = self.resume = RAR(() => {
-					
-					loopInfos.push( info = {
-						fps : fpsOrRun,
-						start : start,
-						interval : interval,
-						end : end
-					});
-					
-					fire();
-				});
-
-				let pause = self.pause = () => {
-
-					REMOVE({
-						array : loopInfos,
-						value : info
-					});
-
-					stop();
-				};
-
-				let changeFPS = self.changeFPS = (fps) => {
-					//REQUIRED: fps
-
-					info.fps = fps;
-				};
-
-				let remove = self.remove = () => {
-					pause();
-				};
+			if (run === undefined) {
+				run = fps;
+				fps = undefined;
 			}
-
-			// when fpsOrRun is run
-			else {
+			
+			let info;
+			
+			let resume = self.resume = RAR(() => {
 				
-				let resume = self.resume = RAR(() => {
-					
-					runs.push(run = fpsOrRun);
-					
-					fire();
+				infos.push(info = {
+					fps : fps,
+					run : run
 				});
-
-				let pause = self.pause = () => {
-
-					REMOVE({
-						array : runs,
-						value : run
-					});
-
-					stop();
-				};
-
-				let remove = self.remove = () => {
-					pause();
-				};
-			}
+				
+				fire();
+			});
+			
+			let pause = self.pause = () => {
+			
+				REMOVE({
+					array : infos,
+					value : info
+				});
+				
+				stop();
+			};
+			
+			let changeFPS = self.changeFPS = (fps) => {
+				//REQUIRED: fps
+				
+				info.fps = fps;
+			};
+			
+			let clearFPS = self.clearFPS = () => {
+				delete info.fps;
+			};
+			
+			let getFPS = self.getFPS = () => {
+				return info.fps;
+			};
+			
+			let remove = self.remove = () => {
+				pause();
+			};
 		}
 	};
 });
@@ -5973,6 +5979,7 @@ global.EACH = METHOD({
 			return false;
 		}
 
+		// when dataOrArrayOrString is data
 		else if (CHECK_IS_DATA(dataOrArrayOrString) === true) {
 
 			for (let name in dataOrArrayOrString) {
@@ -5984,6 +5991,7 @@ global.EACH = METHOD({
 			}
 		}
 
+		// when dataOrArrayOrString is func
 		else if (func === undefined) {
 
 			func = dataOrArrayOrString;
@@ -6113,39 +6121,61 @@ global.REPEAT = METHOD({
  */
 global.REVERSE_EACH = METHOD({
 
-	run : (arrayOrString, func) => {
-		//OPTIONAL: arrayOrString
+	run : (dataOrArrayOrString, func) => {
+		//OPTIONAL: dataOrArrayOrString
 		//REQUIRED: func
 		
-		if (arrayOrString === undefined) {
+		if (dataOrArrayOrString === undefined) {
 			return false;
 		}
 
-		// when arrayOrString is func
+		// when dataOrArrayOrString is data
+		else if (CHECK_IS_DATA(dataOrArrayOrString) === true) {
+			
+			let reverseNames = [];
+
+			for (let name in dataOrArrayOrString) {
+				reverseNames.push(name);
+			}
+			
+			let length = reverseNames.length;
+
+			for (let i = length - 1; i >= 0; i -= 1) {
+				let name = reverseNames[i];
+				
+				if (dataOrArrayOrString.hasOwnProperty === undefined || dataOrArrayOrString.hasOwnProperty(name) === true) {
+					if (func(dataOrArrayOrString[name], name) === false) {
+						return false;
+					}
+				}
+			}
+		}
+
+		// when dataOrArrayOrString is func
 		else if (func === undefined) {
 
-			func = arrayOrString;
-			arrayOrString = undefined;
+			func = dataOrArrayOrString;
+			dataOrArrayOrString = undefined;
 
-			return (arrayOrString) => {
-				return REVERSE_EACH(arrayOrString, func);
+			return (dataOrArrayOrString) => {
+				return REVERSE_EACH(dataOrArrayOrString, func);
 			};
 		}
 
-		// when arrayOrString is array or string
+		// when dataOrArrayOrString is array or string
 		else {
 
-			let length = arrayOrString.length;
+			let length = dataOrArrayOrString.length;
 
 			for (let i = length - 1; i >= 0; i -= 1) {
 
-				if (func(arrayOrString[i], i) === false) {
+				if (func(dataOrArrayOrString[i], i) === false) {
 					return false;
 				}
 				
 				// when shrink
-				if (arrayOrString.length < length) {
-					i += length - arrayOrString.length;
+				if (dataOrArrayOrString.length < length) {
+					i += length - dataOrArrayOrString.length;
 				}
 			}
 		}
@@ -6495,16 +6525,16 @@ global.COOKIE_STORE = CLASS({
 			//REQUIRED: params.name
 			//REQUIRED: params.value
 			//OPTIONAL: params.isToSession
+			//OPTIONAL: params.expireTime
 
 			let name = params.name;
 			let value = params.value;
 			let isToSession = params.isToSession;
-
-			let expireTime;
+			let expireTime = params.expireTime;
 			
 			if (isToSession === true) {
 				expireTime = 0;
-			} else {
+			} else if (expireTime === undefined) {
 				// set expire time 1 year
 				expireTime = new Date();
 				expireTime.setDate(expireTime.getDate() + 356);
@@ -6671,7 +6701,7 @@ global.INFO = OBJECT({
 
 			setLang(lang);
 
-			location.reload();
+			REFRESH();
 		};
 
 		let checkIsTouchDevice = self.checkIsTouchDevice = () => {
@@ -6703,8 +6733,7 @@ OVERRIDE(LOOP, (origin) => {
 		
 		let animationInterval;
 		
-		let loopInfos = [];
-		let runs = [];
+		let infos = [];
 		
 		let fire = () => {
 			
@@ -6720,52 +6749,34 @@ OVERRIDE(LOOP, (origin) => {
 					
 					if (deltaTime > 0) {
 	
-						beforeTime = time;
-						
-						for (let i = 0; i < loopInfos.length; i += 1) {
-							
-							let loopInfo = loopInfos[i];
-							
-							if (loopInfo.fps !== undefined && loopInfo.fps > 0) {
+						for (let i = 0; i < infos.length; i += 1) {
 	
-								if (loopInfo.timeSigma === undefined) {
-									loopInfo.timeSigma = 0;
-									loopInfo.countSigma = 0;
+							let info = infos[i];
+	
+							if (info.fps !== undefined && info.fps > 0) {
+	
+								if (info.timeSigma === undefined) {
+									info.timeSigma = 0;
 								}
-	
-								// calculate count.
-								let count = parseInt(loopInfo.fps * deltaTime * (loopInfo.timeSigma / deltaTime + 1), 10) - loopInfo.countSigma;
-	
-								// start.
-								if (loopInfo.start !== undefined) {
-									loopInfo.start();
-								}
-	
-								// run interval.
-								let interval = loopInfo.interval;
 								
-								for (let j = 0; j < count; j += 1) {
-									interval(loopInfo.fps);
+								info.timeSigma += deltaTime;
+								
+								let frameSecond = 1 / info.fps;
+								
+								if (info.timeSigma >= frameSecond) {
+									
+									info.run(frameSecond);
+									
+									info.timeSigma -= frameSecond;
 								}
-	
-								// end.
-								if (loopInfo.end !== undefined) {
-									loopInfo.end(deltaTime);
-								}
-	
-								loopInfo.countSigma += count;
-	
-								loopInfo.timeSigma += deltaTime;
-								if (loopInfo.timeSigma > 1000) {
-									loopInfo.timeSigma = undefined;
-								}
+							}
+							
+							else {
+								info.run(deltaTime);
 							}
 						}
 	
-						// run runs.
-						for (let i = 0; i < runs.length; i += 1) {
-							runs[i](deltaTime);
-						}
+						beforeTime = time;
 					}
 					
 					animationInterval = requestAnimationFrame(step);
@@ -6775,7 +6786,7 @@ OVERRIDE(LOOP, (origin) => {
 		
 		let stop = () => {
 			
-			if (loopInfos.length <= 0 && runs.length <= 0) {
+			if (infos.length <= 0) {
 	
 				cancelAnimationFrame(animationInterval);
 				animationInterval = undefined;
@@ -6784,93 +6795,54 @@ OVERRIDE(LOOP, (origin) => {
 	
 		return {
 			
-			init : (inner, self, fpsOrRun, intervalOrFuncs) => {
-				//OPTIONAL: fpsOrRun
-				//OPTIONAL: intervalOrFuncs
-				//OPTIONAL: intervalOrFuncs.start
-				//REQUIRED: intervalOrFuncs.interval
-				//OPTIONAL: intervalOrFuncs.end
+			init : (inner, self, fps, run) => {
+				//OPTIONAL: fps
+				//REQUIRED: run
 				
-				let resume;
-				let pause;
-				let changeFPS;
-				let remove;
-	
-				if (intervalOrFuncs !== undefined) {
-					
-					let start;
-					let interval;
-					let end;
-					let info;
-					
-					// init intervalOrFuncs.
-					if (CHECK_IS_DATA(intervalOrFuncs) !== true) {
-						interval = intervalOrFuncs;
-					} else {
-						start = intervalOrFuncs.start;
-						interval = intervalOrFuncs.interval;
-						end = intervalOrFuncs.end;
-					}
+				if (run === undefined) {
+					run = fps;
+					fps = undefined;
+				}
 				
-					resume = self.resume = RAR(() => {
-						
-						loopInfos.push(info = {
-							fps : fpsOrRun,
-							start : start,
-							interval : interval,
-							end : end
-						});
-						
-						fire();
-					});
-	
-					pause = self.pause = () => {
-	
-						REMOVE({
-							array : loopInfos,
-							value : info
-						});
-	
-						stop();
-					};
-	
-					changeFPS = self.changeFPS = (fps) => {
-						//REQUIRED: fps
-	
-						info.fps = fps;
-					};
-	
-					remove = self.remove = () => {
-						pause();
-					};
-				}
-	
-				// when fpsOrRun is run
-				else {
+				let info;
+				
+				let resume = self.resume = RAR(() => {
 					
-					let run;
-					
-					resume = self.resume = RAR(() => {
-						
-						runs.push(run = fpsOrRun);
-						
-						fire();
+					infos.push(info = {
+						fps : fps,
+						run : run
 					});
-	
-					pause = self.pause = () => {
-	
-						REMOVE({
-							array : runs,
-							value : run
-						});
-	
-						stop();
-					};
-	
-					remove = self.remove = () => {
-						pause();
-					};
-				}
+					
+					fire();
+				});
+				
+				let pause = self.pause = () => {
+				
+					REMOVE({
+						array : infos,
+						value : info
+					});
+					
+					stop();
+				};
+				
+				let changeFPS = self.changeFPS = (fps) => {
+					//REQUIRED: fps
+					
+					info.fps = fps;
+				};
+				
+				let clearFPS = self.clearFPS = () => {
+					delete info.fps;
+				};
+				
+				let getFPS = self.getFPS = () => {
+					return info.fps;
+				};
+				
+				let remove = self.remove = () => {
+					pause();
+				};
 			}
 		};
 	});
@@ -6900,33 +6872,48 @@ OVERRIDE(MSG, (origin) => {
 			//REQUIRED: url
 			//REQUIRED: callback
 			
-			GET(url, (content) => {
+			if (CHECK_IS_ARRAY(url) === true) {
 				
-				let data = {};
+				NEXT(url, [
+				(url, next) => {
+					loadCSV(url, next);
+				},
 				
-				let langs;
-				EACH(__PAPA.parse(content).data, (texts, i) => {
+				() => {
+					return callback;
+				}]);
+			}
+			
+			else {
+				
+				GET(url, (content) => {
 					
-					// 첫번째 줄은 언어 설정
-					if (i === 0) {
-						langs = texts;
-					}
+					let data = {};
 					
-					else {
-						let subData = {};
-						EACH(texts, (text, j) => {
-							if (j > 0) {
-								subData[langs[j]] = text.replace(/\\n/, '\n');
-							}
-						});
-						data[texts[0]] = subData;
-					}
+					let langs;
+					EACH(__PAPA.parse(content).data, (texts, i) => {
+						
+						// 첫번째 줄은 언어 설정
+						if (i === 0) {
+							langs = texts;
+						}
+						
+						else {
+							let subData = {};
+							EACH(texts, (text, j) => {
+								if (j > 0) {
+									subData[langs[j]] = text.replace(/\\n/, '\n');
+								}
+							});
+							data[texts[0]] = subData;
+						}
+					});
+					
+					addData(data);
+					
+					callback();
 				});
-				
-				addData(data);
-				
-				callback();
-			});
+			}
 		};
 		
 		return {
@@ -6947,8 +6934,12 @@ OVERRIDE(MSG, (origin) => {
 					msgs = msgData[key];
 				}
 				
+				if (msgs === undefined) {
+					SHOW_ERROR('MSG', key + '에 해당하는 문자열을 찾을 수 없습니다.');
+				}
+				
 				let msg = msgs[INFO.getLang()];
-		
+				
 				if (msg === undefined) {
 					
 					let lang;
@@ -7009,22 +7000,163 @@ OVERRIDE(MSG, (origin) => {
 });
 
 /*
+ * 세션 저장소 클래스
+ * 
+ * 웹 브라우저가 종료되면 저장된 값들이 삭제됩니다.
+ */
+global.SESSION_STORE = CLASS({
+
+	init : (inner, self, storeName) => {
+		//REQUIRED: storeName
+		
+		// gen full name.
+		let genFullName = (name) => {
+			//REQUIRED: name
+
+			return storeName + '.' + name;
+		};
+
+		let save = self.save = (params) => {
+			//REQUIRED: params
+			//REQUIRED: params.name
+			//REQUIRED: params.value
+
+			let name = params.name;
+			let value = params.value;
+
+			sessionStorage.setItem(genFullName(name), STRINGIFY(value));
+		};
+
+		let get = self.get = (name) => {
+			//REQUIRED: name
+
+			let value = PARSE_STR(sessionStorage.getItem(genFullName(name)));
+
+			if (value === TO_DELETE) {
+				value = undefined;
+			}
+
+			return value;
+		};
+
+		let remove = self.remove = (name) => {
+			//REQUIRED: name
+			
+			sessionStorage.removeItem(genFullName(name));
+		};
+
+		let all = self.all = () => {
+			
+			let all = {};
+			
+			EACH(sessionStorage, (value, fullName) => {
+				
+				if (fullName.indexOf(storeName + '.') === 0) {
+					
+					all[fullName.substring(storeName.length + 1)] = PARSE_STR(value);
+				}
+			});
+			
+			return all;
+		};
+
+		let count = self.count = () => {
+			
+			let count = 0;
+			
+			EACH(sessionStorage, (value, fullName) => {
+				
+				if (fullName.indexOf(storeName + '.') === 0) {
+					count += 1;
+				}
+			});
+			
+			return count;
+		};
+
+		let clear = self.clear = () => {
+			
+			EACH(sessionStorage, (value, fullName) => {
+				
+				if (fullName.indexOf(storeName + '.') === 0) {
+					
+					remove(fullName.substring(storeName.length + 1));
+				}
+			});
+		};
+	}
+});
+
+FOR_BOX((box) => {
+
+	box.SESSION_STORE = CLASS({
+
+		init : (inner, self, storeName) => {
+			//REQUIRED: storeName
+
+			let store = SESSION_STORE(box.boxName + '.' + storeName);
+
+			let save = self.save = store.save;
+			
+			let get = self.get = store.get;
+			
+			let remove = self.remove = store.remove;
+			
+			let all = self.all = store.all;
+			
+			let count = self.count = store.count;
+			
+			let clear = self.clear = store.clear;
+		}
+	});
+});
+
+/*
  * 사운드 파일을 재생하는 SOUND 클래스
  */
 global.SOUND = CLASS((cls) => {
 
 	let audioContext;
 	let isCanPlayOGG = new Audio().canPlayType('audio/ogg') !== '';
+	
+	let bufferCache = {};
+	
+	let loadBuffer = (src, callback) => {
+		
+		if (bufferCache[src] !== undefined) {
+			callback(bufferCache[src]);
+		}
+		
+		else {
+			
+			let request = new XMLHttpRequest();
+			request.open('GET', src, true);
+			request.responseType = 'arraybuffer';
+			
+			request.onload = () => {
+				
+				audioContext.decodeAudioData(request.response, (buffer) => {
+					
+					bufferCache[src] = buffer;
+					
+					callback(buffer);
+				});
+			};
+			
+			request.send();
+		}
+	};
 
 	return {
 
-		init : (inner, self, params) => {
+		init : (inner, self, params, onEndHandler) => {
 			//REQUIRED: params
 			//OPTIONAL: params.ogg
 			//OPTIONAL: params.mp3
 			//OPTIONAL: params.wav
 			//OPTIONAL: params.isLoop
 			//OPTIONAL: params.volume
+			//OPTIONAL: onEndHandler
 
 			let ogg = params.ogg;
 			let mp3 = params.mp3;
@@ -7040,10 +7172,19 @@ global.SOUND = CLASS((cls) => {
 			let source;
 			let gainNode;
 			
+			let isLoaded = false;
+			
 			let startedAt = 0;
 			let pausedAt = 0;
 			
+			let duration;
+			let isPlaying = false;
+			
 			let delayed;
+			
+			let fadeInSeconds;
+			
+			let eventMap = {};
 			
 			// init audioContext.
 			if (audioContext === undefined) {
@@ -7059,67 +7200,92 @@ global.SOUND = CLASS((cls) => {
 				src = wav;
 			}
 			
-			let request;
-			
 			let ready = () => {
 				
-				if (request !== undefined) {
-					request.abort();
-				}
-				
-				request = new XMLHttpRequest();
-				request.open('GET', src, true);
-				request.responseType = 'arraybuffer';
-	
-				request.onload = () => {
-	
-					audioContext.decodeAudioData(request.response, (_buffer) => {
-	
+				loadBuffer(src, (_buffer) => {
+					
+					if (buffer === undefined) {
+						
 						gainNode = audioContext.createGain();
 	
 						buffer = _buffer;
 						
+						duration = buffer.duration;
+						
 						gainNode.connect(audioContext.destination);
-						gainNode.gain.setTargetAtTime(volume, 0, 0);
+						
+						if (fadeInSeconds === undefined) {
+							gainNode.gain.setValueAtTime(volume, 0);
+						} else {
+							gainNode.gain.setValueAtTime(0, 0);
+							gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeInSeconds);
+							fadeInSeconds = undefined;
+						}
 	
 						if (delayed !== undefined) {
 							delayed();
 						}
-					});
-				};
-				request.send();
-			};
-			
-			ready();
-
-			let play = self.play = () => {
-
-				delayed = () => {
-
-					source = audioContext.createBufferSource();
-					source.buffer = buffer;
-					source.connect(gainNode);
-					source.loop = isLoop;
-					
-					startedAt = Date.now() - pausedAt;
-					source.start(0, (pausedAt / 1000) % buffer.duration);
-					
-					delayed = undefined;
-					
-					if (isLoop !== true) {
-						source.onended = () => {
-							stop();
-						};
+						
+						fireEvent('load');
+						off('load');
+						
+						isLoaded = true;
 					}
-				};
+				});
+			};
 
-				if (buffer === undefined) {
-					ready();
-				} else {
-					delayed();
+			let play = self.play = (at) => {
+				//OPTIONAL: at
+				
+				if (isPlaying !== true) {
+					
+					if (at !== undefined) {
+						pausedAt = at;
+					}
+	
+					delayed = () => {
+						
+						if (isPlaying !== true) {
+							
+							source = audioContext.createBufferSource();
+							source.buffer = buffer;
+							source.connect(gainNode);
+							source.loop = isLoop;
+							
+							startedAt = Date.now() / 1000 - pausedAt;
+							source.start(0, pausedAt % buffer.duration);
+							
+							delayed = undefined;
+							
+							if (isLoop !== true) {
+								source.onended = () => {
+									stop();
+									if (onEndHandler !== undefined) {
+										onEndHandler();
+									}
+								};
+							}
+							
+							isPlaying = true;
+						}
+					};
+	
+					if (buffer === undefined) {
+						ready();
+					} else {
+						delayed();
+					}
 				}
 
 				return self;
+			};
+			
+			let checkIsPlaying = self.checkIsPlaying = () => {
+				return isPlaying;
+			};
+			
+			let getStartAt = self.getStartAt = () => {
+				return startedAt;
 			};
 			
 			let pause = self.pause = () => {
@@ -7129,10 +7295,12 @@ global.SOUND = CLASS((cls) => {
 					source.disconnect();
 					source = undefined;
 					
-					pausedAt = Date.now() - startedAt;
+					pausedAt = Date.now() / 1000 - startedAt;
 				}
 				
 				delayed = undefined;
+				
+				isPlaying = false;
 			};
 
 			let stop = self.stop = () => {
@@ -7152,16 +7320,22 @@ global.SOUND = CLASS((cls) => {
 				
 				buffer = undefined;
 				delayed = undefined;
+				
+				isPlaying = false;
 			};
 			
 			let setVolume = self.setVolume = (_volume) => {
-				//REQUIRED: _volume
+				//REQUIRED: volume
 				
 				volume = _volume;
 				
 				if (gainNode !== undefined) {
-					gainNode.gain.setTargetAtTime(volume, 0, 0);
+					gainNode.gain.setValueAtTime(volume, 0);
 				}
+			};
+			
+			let getVolume = self.getVolume = () => {
+				return volume;
 			};
 			
 			let setPlaybackRate = self.setPlaybackRate = (playbackRate) => {
@@ -7171,6 +7345,106 @@ global.SOUND = CLASS((cls) => {
 					source.playbackRate.setValueAtTime(playbackRate, 0);
 				}
 			};
+			
+			let fadeIn = self.fadeIn = (seconds) => {
+				//REQUIRED: seconds
+				
+				if (gainNode !== undefined) {
+					gainNode.gain.setValueAtTime(0, 0);
+					gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + seconds);
+				}
+				
+				else {
+					fadeInSeconds = seconds;
+				}
+				
+				play();
+			};
+			
+			let fadeOut = self.fadeOut = (seconds) => {
+				//REQUIRED: seconds
+				
+				if (gainNode !== undefined) {
+					gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + seconds);
+				}
+				
+				DELAY(seconds, () => {
+					stop();
+				});
+			};
+			
+			let getDuration = self.getDuration = () => {
+				return duration;
+			};
+			
+			let on = self.on = (eventName, eventHandler) => {
+				//REQUIRED: eventName
+				//REQUIRED: eventHandler
+				
+				if (eventMap[eventName] === undefined) {
+					eventMap[eventName] = [];
+				}
+	
+				eventMap[eventName].push(eventHandler);
+				
+				if (eventName === 'load' && isLoaded === true) {
+					fireEvent('load');
+					off('load');
+				}
+			};
+			
+			let checkIsEventExists = self.checkIsEventExists = (eventName) => {
+				//REQUIRED: eventName
+				
+				return eventMap[eventName] !== undefined;
+			};
+	
+			let off = self.off = (eventName, eventHandler) => {
+				//REQUIRED: eventName
+				//OPTIONAL: eventHandler
+	
+				if (eventMap[eventName] !== undefined) {
+	
+					if (eventHandler !== undefined) {
+	
+						REMOVE({
+							array: eventMap[eventName],
+							value: eventHandler
+						});
+					}
+	
+					if (eventHandler === undefined || eventMap[eventName].length === 0) {
+						delete eventMap[eventName];
+					}
+				}
+			};
+	
+			let fireEvent = self.fireEvent = (eventNameOrParams) => {
+				//REQUIRED: eventNameOrParams
+				//REQUIRED: eventNameOrParams.eventName
+				//OPTIONAL: eventNameOrParams.e
+				
+				let eventName;
+				let e;
+				
+				if (CHECK_IS_DATA(eventNameOrParams) !== true) {
+					eventName = eventNameOrParams;
+				} else {
+					eventName = eventNameOrParams.eventName;
+					e = eventNameOrParams.e;
+				}
+				
+				let eventHandlers = eventMap[eventName];
+	
+				if (eventHandlers !== undefined) {
+					
+					for (let i = 0; i < eventHandlers.length; i += 1) {
+						eventHandlers[i](e === undefined ? EMPTY_E() : e, self);
+					}
+				}
+			};
+			
+			ready();
 		}
 	};
 });
@@ -7184,13 +7458,14 @@ global.SOUND_ONCE = CLASS({
 		return SOUND;
 	},
 
-	init : (inner, self, params) => {
+	init : (inner, self, params, onEndHandler) => {
 		//REQUIRED: params
 		//OPTIONAL: params.ogg
 		//OPTIONAL: params.mp3
 		//OPTIONAL: params.wav
 		//OPTIONAL: params.isLoop
 		//OPTIONAL: params.volume
+		//OPTIONAL: onEndHandler
 
 		self.play();
 	}
@@ -7487,6 +7762,13 @@ global.ADD_STYLE = METHOD({
 							node : node,
 							style : value(WIN_WIDTH(), WIN_HEIGHT())
 						});
+						
+						DELAY(() => {
+							ADD_STYLE({
+								node : node,
+								style : value(WIN_WIDTH(), WIN_HEIGHT())
+							});
+						});
 					}));
 
 					// remove resize event when remove node.
@@ -7744,8 +8026,6 @@ global.NODE = CLASS({
 
 			wrapperDom = dom;
 			wrapperEl = dom.getEl();
-
-			originDisplay = getStyle('display');
 
 			on('show', () => {
 
@@ -8112,8 +8392,12 @@ global.NODE = CLASS({
 
 			if (wrapperEl !== undefined && wrapperEl.parentNode !== TO_DELETE) {
 
+				fireEvent('beforeRemove');
+
 				// empty children.
 				empty();
+				
+				wrapperDom.empty();
 
 				// remove from parent node.
 				wrapperEl.parentNode.removeChild(wrapperEl);
@@ -8121,15 +8405,26 @@ global.NODE = CLASS({
 				setParent(undefined);
 
 				fireEvent('remove');
-
-				EVENT.removeAll({
-					node : self
-				});
-
-				// free memory.
-				wrapperEl = undefined;
-				contentEl = undefined;
 			}
+			
+			if (wrapperEl !== undefined) {
+				wrapperEl.remove();
+			}
+			if (contentEl !== undefined) {
+				contentEl.remove();
+			}
+
+			// free memory.
+			wrapperEl = undefined;
+			contentEl = undefined;
+
+			EVENT.removeAll({
+				node : self
+			});
+
+			EVENT.removeAll({
+				node : wrapperDom
+			});
 			
 			// free memory.
 			data = undefined;
@@ -8144,7 +8439,7 @@ global.NODE = CLASS({
 		let on = self.on = (eventName, eventHandler) => {
 			//REQUIRED: eventName
 			//REQUIRED: eventHandler
-
+			
 			EVENT({
 				node : self,
 				name : eventName
@@ -8171,12 +8466,26 @@ global.NODE = CLASS({
 			}
 		};
 		
-		let fireEvent = self.fireEvent = (eventName) => {
-			//REQUIRED: eventName
+		let fireEvent = self.fireEvent = (nameOrParams) => {
+			//REQUIRED: nameOrParams
+			//REQUIRED: nameOrParams.name	이벤트 이름
+			//OPTIONAL: nameOrParams.e
+			
+			let name;
+			let e;
+			
+			// init params.
+			if (CHECK_IS_DATA(nameOrParams) !== true) {
+				name = nameOrParams;
+			} else {
+				name = nameOrParams.name;
+				e = nameOrParams.e;
+			}
 			
 			return EVENT.fireAll({
 				node : self,
-				name : eventName
+				name : name,
+				e : e
 			});
 		};
 
@@ -8206,19 +8515,19 @@ global.NODE = CLASS({
 		};
 
 		let getWidth = self.getWidth = () => {
-			return wrapperEl.offsetWidth;
+			return wrapperEl === undefined ? 0 : wrapperEl.offsetWidth;
 		};
 
 		let getInnerWidth = self.getInnerWidth = () => {
-			return wrapperEl.clientWidth;
+			return wrapperEl === undefined ? 0 : wrapperEl.clientWidth;
 		};
 
 		let getHeight = self.getHeight = () => {
-			return wrapperEl.offsetHeight;
+			return wrapperEl === undefined ? 0 : wrapperEl.offsetHeight;
 		};
 
 		let getInnerHeight = self.getInnerHeight = () => {
-			return wrapperEl.clientHeight;
+			return wrapperEl === undefined ? 0 : wrapperEl.clientHeight;
 		};
 
 		let getLeft = self.getLeft = () => {
@@ -8250,6 +8559,12 @@ global.NODE = CLASS({
 		};
 
 		let hide = self.hide = () => {
+			
+			originDisplay = getStyle('display');
+			
+			if (originDisplay === 'none') {
+				originDisplay = undefined;
+			}
 
 			addStyle({
 				display : 'none'
@@ -8285,7 +8600,7 @@ global.NODE = CLASS({
 			if (wrapperEl === document.body) {
 				return true;
 			} else {
-				return parentNode !== undefined && parentNode.checkIsShowing() === true && getStyle('display') !== 'none';
+				return getStyle('display') !== 'none' && getWidth() > 0;
 			}
 		};
 		
@@ -8375,7 +8690,9 @@ global.NODE = CLASS({
 
 		if (on !== undefined) {
 			EACH(on, (handler, name) => {
-				self.on(name, handler);
+				if (handler !== undefined) {
+					self.on(name, handler);
+				}
 			});
 		}
 
@@ -8532,6 +8849,10 @@ global.E = CLASS({
 		let getFiles = self.getFiles = () => {
 			return e.dataTransfer.files;
 		};
+		
+		let getClipboardItems = self.getClipboardItems = () => {
+			return e.clipboardData === undefined || e.clipboardData.items === undefined ? [] : e.clipboardData.items;
+		};
 	}
 });
 
@@ -8573,6 +8894,10 @@ global.EMPTY_E = CLASS({
 		let getWheelDelta = self.getWheelDelta = () => {
 			return 0;
 		};
+		
+		let getClipboardItems = self.getClipboardItems = () => {
+			return [];
+		};
 	}
 });
 
@@ -8587,9 +8912,11 @@ global.EVENT = CLASS((cls) => {
 		//REQUIRED: nameOrParams
 		//OPTIONAL: nameOrParams.node	이벤트가 등록된 노드
 		//REQUIRED: nameOrParams.name	이벤트 이름
+		//OPTIONAL: nameOrParams.e
 
 		let node;
 		let name;
+		let e;
 		
 		let nodeId;
 		
@@ -8603,6 +8930,7 @@ global.EVENT = CLASS((cls) => {
 		} else {
 			node = nameOrParams.node;
 			name = nameOrParams.name;
+			e = nameOrParams.e;
 		}
 
 		if (node === undefined) {
@@ -8621,7 +8949,7 @@ global.EVENT = CLASS((cls) => {
 
 				EACH(events, (evt) => {
 
-					if (evt.fire() === false) {
+					if (evt.fire(e) === false) {
 						
 						ret = false;
 					}
@@ -8767,7 +9095,7 @@ global.EVENT = CLASS((cls) => {
 			} else {
 				nodeId = node.id;
 			}
-
+			
 			// push event to map.
 
 			if (eventMaps[nodeId] === undefined) {
@@ -9018,10 +9346,11 @@ global.EVENT = CLASS((cls) => {
 				removeFromMap();
 			};
 
-			let fire = self.fire = () => {
+			let fire = self.fire = (e) => {
+				//OPTIONAL: e
 
 				// pass empty e object.
-				return eventHandler(EMPTY_E(), node);
+				return eventHandler(e !== undefined ? e : EMPTY_E(), node);
 			};
 
 			let getEventHandler = self.getEventHandler = () => {
@@ -9309,7 +9638,7 @@ global.AUDIO = CLASS({
 		};
 		
 		let stop = self.stop = () => {
-			self.getEl().pause();
+			pause();
 			self.getEl().currentTime = 0;
 		};
 	}
@@ -9860,6 +10189,9 @@ global.IMG = CLASS({
 
 		let el = self.getEl();
 		
+		// CORS 이슈 해결
+		el.crossOrigin = 'anonymous';
+		
 		//OVERRIDE: self.getWidth
 		let getWidth = self.getWidth = () => {
 			return el.width;
@@ -9951,6 +10283,7 @@ global.INPUT = CLASS((cls) => {
 			//OPTIONAL: params.accept
 			//OPTIONAL: params.isMultiple
 			//OPTIONAL: params.isOffAutocomplete
+			//OPTIONAL: params.isOffAutocapitalize
 			//OPTIONAL: params.c		자식 노드. 하나의 노드를 지정하거나, 노드들의 배열을 지정할 수 있습니다.
 			//OPTIONAL: params.on		이벤트
 			
@@ -9963,6 +10296,7 @@ global.INPUT = CLASS((cls) => {
 			let accept;
 			let isMultiple;
 			let isOffAutocomplete;
+			let isOffAutocapitalize;
 
 			let getName;
 			let getValue;
@@ -9986,6 +10320,7 @@ global.INPUT = CLASS((cls) => {
 				accept = params.accept;
 				isMultiple = params.isMultiple;
 				isOffAutocomplete = params.isOffAutocomplete;
+				isOffAutocapitalize = params.isOffAutocapitalize;
 			}
 
 			if (type !== undefined) {
@@ -10028,6 +10363,13 @@ global.INPUT = CLASS((cls) => {
 				if (isOffAutocomplete === true) {
 					inner.setAttr({
 						name : 'autocomplete',
+						value : 'off'
+					});
+				}
+				
+				if (isOffAutocapitalize === true) {
+					inner.setAttr({
+						name : 'autocapitalize',
 						value : 'off'
 					});
 				}
@@ -10242,6 +10584,7 @@ global.INPUT = CLASS((cls) => {
 			//OPTIONAL: params.accept
 			//OPTIONAL: params.isMultiple
 			//OPTIONAL: params.isOffAutocomplete
+			//OPTIONAL: params.isOffAutocapitalize
 			//OPTIONAL: params.c		자식 노드. 하나의 노드를 지정하거나, 노드들의 배열을 지정할 수 있습니다.
 			//OPTIONAL: params.on		이벤트
 			
@@ -11844,111 +12187,106 @@ global.ENCRYPTION_REQUEST = METHOD({
 });
 
 /*!
-audiocontext-polyfill.js v0.1.1
+audiocontext-polyfill.js v0.1.2
 (c) 2013 - 2014 Shinnosuke Watanabe
 Licensed under the MIT license
 */
+'use strict';
 
-(function(window, undefined) {
-  'use strict';
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
-  window.AudioContext = window.AudioContext ||
-                        window.webkitAudioContext;
-  
-  if (window.AudioContext !== undefined) {
+if (window.AudioContext !== undefined) {
 
-    window.OfflineAudioContext = window.OfflineAudioContext ||
-                                 window.webkitOfflineAudioContext;
+	window.OfflineAudioContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
 
-    var Proto = AudioContext.prototype;
+	let Proto = AudioContext.prototype;
 
-    var tmpctx = new AudioContext();
+	let tmpctx = new AudioContext();
 
-    // Support alternate names
-    // start (noteOn), stop (noteOff), createGain (createGainNode), etc.
-    var isStillOld = function(normative, old) {
-      return normative === undefined && old !== undefined;
-    };
+	// Support alternate names
+	// start (noteOn), stop (noteOff), createGain (createGainNode), etc.
+	let isStillOld = (normative, old) => {
+		return normative === undefined && old !== undefined;
+	};
 
-    var bufProto = tmpctx.createBufferSource().constructor.prototype;
+	let bufProto = tmpctx.createBufferSource().constructor.prototype;
 
-    if (isStillOld(bufProto.start, bufProto.noteOn) ||
-    isStillOld(bufProto.stop, bufProto.noteOff)) {
-      var nativeCreateBufferSource = Proto.createBufferSource;
+	if (isStillOld(bufProto.start, bufProto.noteOn) || isStillOld(bufProto.stop, bufProto.noteOff)) {
+		
+		let nativeCreateBufferSource = Proto.createBufferSource;
 
-      Proto.createBufferSource = function createBufferSource() {
-        var returnNode = nativeCreateBufferSource.call(this);
-        returnNode.start = returnNode.start || returnNode.noteOn;
-        returnNode.stop = returnNode.stop || returnNode.noteOff;
+		Proto.createBufferSource = function() {
+			let returnNode = nativeCreateBufferSource.call(this);
+			returnNode.start = returnNode.start || returnNode.noteOn;
+			returnNode.stop = returnNode.stop || returnNode.noteOff;
 
-        return returnNode;
-      };
-    }
+			return returnNode;
+		};
+	}
 
-    // Firefox 24 doesn't support OscilatorNode
-    if (typeof tmpctx.createOscillator === 'function') {
-      var oscProto = tmpctx.createOscillator().constructor.prototype;
+	// Firefox 24 doesn't support OscilatorNode
+	if (typeof tmpctx.createOscillator === 'function') {
+		let oscProto = tmpctx.createOscillator().constructor.prototype;
 
-      if (isStillOld(oscProto.start, oscProto.noteOn) ||
-      isStillOld(oscProto.stop, oscProto.noteOff)) {
-        var nativeCreateOscillator = Proto.createOscillator;
+		if (isStillOld(oscProto.start, oscProto.noteOn) ||
+			isStillOld(oscProto.stop, oscProto.noteOff)) {
+			let nativeCreateOscillator = Proto.createOscillator;
 
-        Proto.createOscillator = function createOscillator() {
-          var returnNode = nativeCreateOscillator.call(this);
-          returnNode.start = returnNode.start || returnNode.noteOn;
-          returnNode.stop = returnNode.stop || returnNode.noteOff;
+			Proto.createOscillator = function() {
+				let returnNode = nativeCreateOscillator.call(this);
+				returnNode.start = returnNode.start || returnNode.noteOn;
+				returnNode.stop = returnNode.stop || returnNode.noteOff;
 
-          return returnNode;
-        };
-      }
-    }
+				return returnNode;
+			};
+		}
+	}
 
-    if (Proto.createGain === undefined && Proto.createGainNode !== undefined) {
-      Proto.createGain = Proto.createGainNode;
-    }
+	if (Proto.createGain === undefined && Proto.createGainNode !== undefined) {
+		Proto.createGain = Proto.createGainNode;
+	}
 
-    if (Proto.createDelay === undefined && Proto.createDelayNode !== undefined) {
-      Proto.createDelay = Proto.createGainNode;
-    }
+	if (Proto.createDelay === undefined && Proto.createDelayNode !== undefined) {
+		Proto.createDelay = Proto.createGainNode;
+	}
 
-    if (Proto.createScriptProcessor === undefined &&
-    Proto.createJavaScriptNode !== undefined) {
-      Proto.createScriptProcessor = Proto.createJavaScriptNode;
-    }
+	if (Proto.createScriptProcessor === undefined &&
+		Proto.createJavaScriptNode !== undefined) {
+		Proto.createScriptProcessor = Proto.createJavaScriptNode;
+	}
 
-    // Black magic for iOS
-    var is_iOS = (navigator.userAgent.indexOf('like Mac OS X') !== -1);
-    if (is_iOS) {
-      var OriginalAudioContext = AudioContext;
-      window.AudioContext = function AudioContext() {
-        var iOSCtx = new OriginalAudioContext();
+	// Black magic for iOS
+	if (navigator.userAgent.indexOf('like Mac OS X') !== -1) {
+		
+		let OriginalAudioContext = AudioContext;
+		
+		window.AudioContext = function() {
+			let iOSCtx = new OriginalAudioContext();
 
-        var body = document.body;
-        var tmpBuf = iOSCtx.createBufferSource();
-        var tmpProc = iOSCtx.createScriptProcessor(256, 1, 1);
+			let body = document.body;
+			let tmpBuf = iOSCtx.createBufferSource();
+			let tmpProc = iOSCtx.createScriptProcessor(256, 1, 1);
+			
+			let instantProcess = () => {
+				tmpBuf.start(0);
+				tmpBuf.connect(tmpProc);
+				tmpProc.connect(iOSCtx.destination);
+			};
 
-        body.addEventListener('touchstart', instantProcess, false);
+			body.addEventListener('touchstart', instantProcess, false);
 
-        function instantProcess() {
-          tmpBuf.start(0);
-          tmpBuf.connect(tmpProc);
-          tmpProc.connect(iOSCtx.destination);
-        }
+			// This function will be called once and for all.
+			tmpProc.onaudioprocess = () => {
+				tmpBuf.disconnect();
+				tmpProc.disconnect();
+				body.removeEventListener('touchstart', instantProcess, false);
+				tmpProc.onaudioprocess = null;
+			};
 
-        // This function will be called once and for all.
-        tmpProc.onaudioprocess = function() {
-          tmpBuf.disconnect();
-          tmpProc.disconnect();
-          body.removeEventListener('touchstart', instantProcess, false);
-          tmpProc.onaudioprocess = null;
-        };
-
-        return iOSCtx;
-      };
-    }
-  }
-}(window));
-
+			return iOSCtx;
+		};
+	}
+}
 /*
  * HTTP DELETE 요청을 보냅니다.
  */
@@ -12144,7 +12482,7 @@ global.REQUEST = METHOD({
 			errorListener = responseListenerOrListeners.error;
 		}
 		
-		(method === 'GET' || method === 'DELETE' ? fetch(url + '?' + paramStr, {
+		(method === 'GET' || method === 'DELETE' ? fetch(url.substring(0, 5) === 'data:' ? url : url + '?' + paramStr, {
 			method : method,
 			credentials : location.protocol !== 'file:' && host === BROWSER_CONFIG.host && port === BROWSER_CONFIG.port ? 'include' : undefined,
 			headers : new Headers(headers === undefined ? {} : headers)
@@ -12161,7 +12499,7 @@ global.REQUEST = METHOD({
 				let errorMsg = 'HTTP RESPONSE STATUS CODE: ' + response.status;
 
 				if (errorListener !== undefined) {
-					errorListener(errorMsg);
+					errorListener(errorMsg, response.status);
 				} else {
 					SHOW_ERROR('REQUEST', errorMsg, params);
 				}
@@ -12517,6 +12855,10 @@ global.REFRESH = METHOD((m) => {
 					name : 'hashchange'
 				}, () => {
 					location.replace(savedHash === '' ? '#!/' : savedHash);
+					
+					if (savedHash !== '#!/' + uri) {
+						history.back();
+					}
 				});
 		
 				location.href = '#!/' + getRefreshingURI();
@@ -12531,6 +12873,10 @@ global.REFRESH = METHOD((m) => {
 				
 				history.replaceState(undefined, undefined, '/' + savedURI);
 				MATCH_VIEW.checkAll();
+				
+				if (savedURI !== uri) {
+					history.back();
+				}
 			}
 		}
 	};
